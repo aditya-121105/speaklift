@@ -1,4 +1,8 @@
-# AI Communication Coach
+# SpeakLift
+
+Speak with Confidence. Lift Your Career.
+
+AI-Powered Interview & Viva Confidence Platform
 
 AI-powered communication improvement platform focused on interview preparation, speaking confidence, professional communication, and personalized coaching.
 
