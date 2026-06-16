@@ -19,16 +19,6 @@ class Profile(Base, TimestampMixin):
         nullable=False,
     )
 
-    education: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
-    target_role: Mapped[str | None] = mapped_column(
-        String(255),
-        nullable=True,
-    )
-
     experience_level: Mapped[str | None] = mapped_column(
         String(50),
         nullable=True,
