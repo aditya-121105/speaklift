@@ -7,6 +7,7 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=255)
 
 
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -15,3 +16,13 @@ class LoginRequest(BaseModel):
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class RegisterResponse(BaseModel):
+    message: str
+    user_id: int
+
+
+class CurrentUserResponse(BaseModel):
+    id: int
+    email: EmailStr
+    is_verified: bool

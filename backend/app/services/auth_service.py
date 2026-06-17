@@ -6,6 +6,11 @@ from app.core.security import (
 from app.schemas.auth import (
     LoginRequest,
     TokenResponse,
+
+)
+from app.shared.exceptions import (
+    UserAlreadyExistsError,
+    InvalidCredentialsError,
 )
 
 from app.core.security import hash_password
@@ -19,8 +24,8 @@ class AuthService:
 
     @staticmethod
     def register_user(
-        db: Session,
-        payload: RegisterRequest,
+            db: Session,
+            payload: RegisterRequest,
     ) -> User:
 
         existing_user = UserRepository.get_by_email(
@@ -29,34 +34,38 @@ class AuthService:
         )
 
         if existing_user:
-            raise ValueError(
+            raise UserAlreadyExistsError(
                 "Email already registered"
             )
+        try:
+            user = User(
+                email=payload.email,
+                password_hash=hash_password(
+                    payload.password
+                ),
+                is_active=True,
+                is_verified=False,
+            )
 
-        user = User(
-            email=payload.email,
-            password_hash=hash_password(
-                payload.password
-            ),
-            is_active=True,
-            is_verified=False,
-        )
+            db.add(user)
+            db.flush()
 
-        db.add(user)
-        db.flush()
+            profile = Profile(
+                user_id=user.id,
+                full_name=payload.full_name,
+            )
 
-        profile = Profile(
-            user_id=user.id,
-            full_name=payload.full_name,
-        )
+            db.add(profile)
 
-        db.add(profile)
+            db.commit()
 
-        db.commit()
+            db.refresh(user)
 
-        db.refresh(user)
+            return user
 
-        return user
+        except Exception:
+            db.rollback()
+            raise
 
     @staticmethod
     def login_user(
@@ -70,7 +79,7 @@ class AuthService:
         )
 
         if not user:
-            raise ValueError(
+            raise InvalidCredentialsError(
                 "Invalid email or password"
             )
 
@@ -78,7 +87,7 @@ class AuthService:
             payload.password,
             user.password_hash,
         ):
-            raise ValueError(
+            raise InvalidCredentialsError(
                 "Invalid email or password"
             )
 
