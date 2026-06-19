@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-
+from sqlalchemy import func
 from app.models.question_bank import QuestionBank
 from app.shared.enums import (
     ExperienceLevel,
@@ -68,7 +68,8 @@ class QuestionBankRepository:
 
         return (
             query.order_by(
-                QuestionBank.usage_count.asc()
+                QuestionBank.usage_count.asc(),
+                func.random(),
             )
             .limit(limit)
             .all()

@@ -22,6 +22,21 @@ class InterviewQuestionRepository:
         return question
 
     @staticmethod
+    def create_many(
+        db: Session,
+        questions: list[InterviewQuestion],
+    ) -> list[InterviewQuestion]:
+
+        db.add_all(questions)
+
+        db.commit()
+
+        for question in questions:
+            db.refresh(question)
+
+        return questions
+
+    @staticmethod
     def get_by_id(
         db: Session,
         question_id: int,

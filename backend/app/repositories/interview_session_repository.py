@@ -71,3 +71,14 @@ class InterviewSessionRepository:
             )
             .first()
         )
+
+    @staticmethod
+    def save(
+            db: Session,
+            interview_session: InterviewSession,
+    ) -> InterviewSession:
+        db.commit()
+
+        db.refresh(interview_session)
+
+        return interview_session
