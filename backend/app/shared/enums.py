@@ -38,3 +38,6 @@ class DifficultyLevel(str, Enum):
 class QuestionSource(str, Enum):
     AI = "AI"
     MANUAL = "MANUAL"
+class AnswerSource(str, Enum):
+    TEXT = "TEXT"
+    VOICE = "VOICE"
