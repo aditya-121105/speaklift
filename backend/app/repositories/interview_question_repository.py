@@ -68,3 +68,33 @@ class InterviewQuestionRepository:
             )
             .all()
         )
+
+    @staticmethod
+    def get_first_unasked_question(
+            db: Session,
+            interview_session_id: int,
+    ) -> InterviewQuestion | None:
+        return (
+            db.query(InterviewQuestion)
+            .filter(
+                InterviewQuestion.interview_session_id
+                == interview_session_id,
+                InterviewQuestion.is_asked.is_(False),
+            )
+            .order_by(
+                InterviewQuestion.question_order
+            )
+            .first()
+        )
+
+
+    @staticmethod
+    def save(
+            db: Session,
+            question: InterviewQuestion,
+    ) -> InterviewQuestion:
+        db.commit()
+
+        db.refresh(question)
+
+        return question
