@@ -187,3 +187,24 @@ def submit_answer(
         "interview_completed": True,
         "next_question": None,
     }
+
+@router.get(
+    "/{interview_session_id}/questions",
+    response_model=list[
+        InterviewQuestionResponse
+    ],
+)
+def get_questions(
+    interview_session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+
+    return (
+        InterviewService.get_questions(
+            db=db,
+            session_id=interview_session_id,
+        )
+    )

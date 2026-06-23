@@ -2,11 +2,11 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.models.interview_question import (
-    InterviewQuestion,
-)
 from app.models.interview_answer import (
     InterviewAnswer,
+)
+from app.models.interview_question import (
+    InterviewQuestion,
 )
 
 from app.repositories.interview_answer_repository import (
@@ -76,18 +76,22 @@ class InterviewService:
                 )
             )
 
-        interview_session.status = (
-            InterviewStatus.IN_PROGRESS
-        )
+        if (
+                interview_session.status
+                == InterviewStatus.CREATED
+        ):
+            interview_session.status = (
+                InterviewStatus.IN_PROGRESS
+            )
 
-        interview_session.started_at = (
-            datetime.utcnow()
-        )
+            interview_session.started_at = (
+                datetime.utcnow()
+            )
 
-        InterviewSessionRepository.save(
-            db=db,
-            interview_session=interview_session,
-        )
+            InterviewSessionRepository.save(
+                db=db,
+                interview_session=interview_session,
+            )
 
         first_question = (
             InterviewQuestionRepository
@@ -189,3 +193,17 @@ class InterviewService:
             )
 
         return None
+
+    @staticmethod
+    def get_questions(
+            db: Session,
+            session_id: int,
+    ) -> list[InterviewQuestion]:
+
+        return (
+            InterviewQuestionRepository
+            .get_by_session(
+                db=db,
+                interview_session_id=session_id,
+            )
+        )
