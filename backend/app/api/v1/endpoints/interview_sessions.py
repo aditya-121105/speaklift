@@ -160,25 +160,32 @@ def submit_answer(
         get_current_user
     ),
 ):
+    try:
 
-    next_question = (
-        InterviewService.submit_answer(
-            db=db,
-            session_id=(
-                interview_session_id
-            ),
-            question_id=payload.question_id,
-            transcript=payload.transcript,
-            answer_source=(
-                payload.answer_source
-            ),
-            answer_duration_seconds=(
-                payload
-                .answer_duration_seconds
-            ),
+        next_question = (
+            InterviewService.submit_answer(
+                db=db,
+                session_id=(
+                    interview_session_id
+                ),
+                user_id=current_user.id,
+                question_id=payload.question_id,
+                transcript=payload.transcript,
+                answer_source=(
+                    payload.answer_source
+                ),
+                answer_duration_seconds=(
+                    payload.answer_duration_seconds
+                ),
+            )
         )
-    )
 
+    except ValueError as exc:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
     if next_question:
 
         return {
@@ -205,12 +212,22 @@ def get_questions(
     ),
 ):
 
-    return (
-        InterviewService.get_questions(
-            db=db,
-            session_id=interview_session_id,
+    try:
+
+        return (
+            InterviewService.get_questions(
+                db=db,
+                session_id=interview_session_id,
+                user_id=current_user.id,
+            )
         )
-    )
+
+    except ValueError as exc:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )
 
 @router.get(
     "/{interview_session_id}/answers",
@@ -226,9 +243,19 @@ def get_answers(
     ),
 ):
 
-    return (
-        InterviewService.get_answers(
-            db=db,
-            session_id=interview_session_id,
+    try:
+
+        return (
+            InterviewService.get_answers(
+                db=db,
+                session_id=interview_session_id,
+                user_id=current_user.id,
+            )
         )
-    )
+
+    except ValueError as exc:
+
+        raise HTTPException(
+            status_code=404,
+            detail=str(exc),
+        )

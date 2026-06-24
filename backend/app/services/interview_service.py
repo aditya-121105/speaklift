@@ -109,12 +109,24 @@ class InterviewService:
     def submit_answer(
             db: Session,
             session_id: int,
+            user_id: int,
             question_id: int,
             transcript: str,
             answer_source: AnswerSource,
             answer_duration_seconds: int | None = None,
     ) -> InterviewQuestion | None:
+        interview_session = (
+            InterviewSessionRepository.get_by_id_and_user(
+                db=db,
+                interview_session_id=session_id,
+                user_id=user_id,
+            )
+        )
 
+        if not interview_session:
+            raise ValueError(
+                "Interview session not found."
+            )
         question = (
             InterviewQuestionRepository.get_by_id(
                 db=db,
@@ -195,7 +207,20 @@ class InterviewService:
     def get_questions(
             db: Session,
             session_id: int,
+            user_id: int,
     ) -> list[InterviewQuestion]:
+        interview_session = (
+            InterviewSessionRepository.get_by_id_and_user(
+                db=db,
+                interview_session_id=session_id,
+                user_id=user_id,
+            )
+        )
+
+        if not interview_session:
+            raise ValueError(
+                "Interview session not found."
+            )
 
         return (
             InterviewQuestionRepository
@@ -209,7 +234,21 @@ class InterviewService:
     def get_answers(
             db: Session,
             session_id: int,
+            user_id: int,
     ) -> list[InterviewAnswer]:
+
+        interview_session = (
+            InterviewSessionRepository.get_by_id_and_user(
+                db=db,
+                interview_session_id=session_id,
+                user_id=user_id,
+            )
+        )
+
+        if not interview_session:
+            raise ValueError(
+                "Interview session not found."
+            )
 
         return (
             InterviewAnswerRepository
