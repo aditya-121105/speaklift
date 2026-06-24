@@ -16,9 +16,6 @@ from app.repositories.interview_answer_repository import (
 from app.shared.enums import (
     AnswerSource,
 )
-from app.models.interview_session import (
-    InterviewSession,
-)
 
 from app.repositories.interview_question_repository import (
     InterviewQuestionRepository,
@@ -205,5 +202,19 @@ class InterviewService:
             .get_by_session(
                 db=db,
                 interview_session_id=session_id,
+            )
+        )
+
+    @staticmethod
+    def get_answers(
+            db: Session,
+            session_id: int,
+    ) -> list[InterviewAnswer]:
+
+        return (
+            InterviewAnswerRepository
+            .get_by_session(
+                db=db,
+                session_id=session_id,
             )
         )

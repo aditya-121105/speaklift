@@ -1,6 +1,9 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+)
 
 from app.shared.enums import (
     AnswerSource,
@@ -17,7 +20,9 @@ class SubmitAnswerRequest(BaseModel):
     answer_duration_seconds: int | None = None
 
 
-class InterviewAnswerResponse(BaseModel):
+class InterviewAnswerResponse(
+    BaseModel
+):
     id: int
 
     interview_session_id: int
@@ -31,3 +36,7 @@ class InterviewAnswerResponse(BaseModel):
     answer_duration_seconds: int | None
 
     created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )

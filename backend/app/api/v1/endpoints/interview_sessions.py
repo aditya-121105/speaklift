@@ -34,6 +34,9 @@ from app.schemas.interview_answer import (
 from app.schemas.interview_question import (
     SubmitAnswerResponse,
 )
+from app.schemas.interview_answer import (
+    InterviewAnswerResponse,
+)
 
 router = APIRouter(
     prefix="/interviews",
@@ -204,6 +207,27 @@ def get_questions(
 
     return (
         InterviewService.get_questions(
+            db=db,
+            session_id=interview_session_id,
+        )
+    )
+
+@router.get(
+    "/{interview_session_id}/answers",
+    response_model=list[
+        InterviewAnswerResponse
+    ],
+)
+def get_answers(
+    interview_session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(
+        get_current_user
+    ),
+):
+
+    return (
+        InterviewService.get_answers(
             db=db,
             session_id=interview_session_id,
         )
