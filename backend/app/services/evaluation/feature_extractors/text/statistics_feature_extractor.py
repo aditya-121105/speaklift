@@ -3,61 +3,39 @@
 Module:
     Statistics Feature Extractor
 
-Sprint:
-    Sprint 4 - Evaluation Engine
-
 Purpose:
-    Extract statistical features from an interview corpus.
+    Extracts numerical statistical features from processed interview answers.
 
 Responsibilities:
-    ✔ Count answers
     ✔ Count words
+    ✔ Count answers
     ✔ Compute averages
-    ✔ Compute vocabulary richness
+    ✔ Compute lexical diversity
 
 Does NOT:
-    ✘ Evaluate interview quality
-    ✘ Call AI models
-    ✘ Access database
-
+    ✘ Evaluate candidate quality
+    ✘ Apply interview rules
+    ✘ Use AI models
 ==============================================================================
 """
 
-from app.schemas.evaluation.text_document import (
-    TextDocument,
-)
+from app.schemas.evaluation.text_document import TextDocument
 
 
 class StatisticsFeatureExtractor:
     """
-    Extract statistical features from interview text.
+    Extract statistical features from interview documents.
     """
 
     SHORT_ANSWER_THRESHOLD = 10
-
     LONG_ANSWER_THRESHOLD = 80
 
     @classmethod
     def extract(
         cls,
         documents: list[TextDocument],
-        durations: list[int] | None = None,
-    ) -> dict:
-        """
-        Extract statistical features.
-
-        Parameters
-        ----------
-        documents:
-            List of processed interview answers.
-
-        durations:
-            Duration (seconds) of each answer.
-
-        Returns
-        -------
-        Dictionary containing statistical features.
-        """
+        answer_durations: list[int] | None = None,
+    ) -> dict[str, float | int]:
 
         total_answers = len(documents)
 
@@ -68,13 +46,18 @@ class StatisticsFeatureExtractor:
 
         unique_words = len(
             {
-                token
+                lemma
                 for document in documents
-                for token in document.lemmas
+                for lemma in document.lemmas
             }
         )
 
-        average_words = (
+        total_sentences = sum(
+            len(document.sentences)
+            for document in documents
+        )
+
+        average_words_per_answer = (
             total_words / total_answers
             if total_answers
             else 0.0
@@ -91,14 +74,15 @@ class StatisticsFeatureExtractor:
             else 0.0
         )
 
-        total_sentences = sum(
-            len(document.sentences)
-            for document in documents
-        )
-
         average_sentence_length = (
             total_words / total_sentences
             if total_sentences
+            else 0.0
+        )
+
+        vocabulary_richness = (
+            unique_words / total_words
+            if total_words
             else 0.0
         )
 
@@ -119,15 +103,9 @@ class StatisticsFeatureExtractor:
             for document in documents
         )
 
-        vocabulary_richness = (
-            unique_words / total_words
-            if total_words
-            else 0.0
-        )
-
-        average_duration = (
-            sum(durations) / len(durations)
-            if durations
+        average_answer_duration = (
+            sum(answer_durations) / len(answer_durations)
+            if answer_durations
             else 0.0
         )
 
@@ -135,12 +113,13 @@ class StatisticsFeatureExtractor:
             "total_answers": total_answers,
             "total_words": total_words,
             "unique_words": unique_words,
-            "average_words_per_answer": average_words,
+            "total_sentences": total_sentences,
+            "average_words_per_answer": average_words_per_answer,
             "average_word_length": average_word_length,
             "average_sentence_length": average_sentence_length,
+            "average_answer_duration": average_answer_duration,
+            "vocabulary_richness": vocabulary_richness,
             "empty_answers": empty_answers,
             "short_answers": short_answers,
             "long_answers": long_answers,
-            "average_answer_duration": average_duration,
-            "vocabulary_richness": vocabulary_richness,
         }
