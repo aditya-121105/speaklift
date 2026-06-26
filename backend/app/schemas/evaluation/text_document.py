@@ -3,15 +3,28 @@
 Module:
     Text Document
 
-Purpose:
-    Serializable representation of a processed interview answer.
+Sprint:
+    Sprint 4 - Evaluation Engine
 
-This schema is produced only by TextProcessor and consumed by
-all feature extractors.
+Purpose:
+    Serializable representation of one processed interview answer.
+
+Produced By:
+    TextProcessor
+
+Consumed By:
+    - StatisticsFeatureExtractor
+    - VocabularyFeatureExtractor
+    - KeywordFeatureExtractor
+    - ReadabilityFeatureExtractor
+    - GrammarFeatureExtractor
+    - SentimentFeatureExtractor
+    - SemanticFeatureExtractor
 
 NOTE:
     This schema intentionally does NOT expose spaCy objects.
-    Only extracted information is stored.
+    Only derived information required by downstream modules.
+
 ==============================================================================
 """
 
@@ -38,15 +51,27 @@ class TextDocument(BaseModel):
 
     lemmas: list[str] = Field(
         default_factory=list,
-        description="Base forms of words."
+        description="Base form of each token."
     )
 
     sentences: list[str] = Field(
         default_factory=list,
-        description="Sentence segmentation."
+        description="Detected sentences."
     )
 
     named_entities: list[str] = Field(
         default_factory=list,
         description="Named entities detected by spaCy."
+    )
+
+    stop_words: list[str] = Field(
+        default_factory=list,
+        description="Stop words detected by spaCy."
+    )
+
+    content_words: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Content words (nouns, verbs, adjectives, adverbs)."
+        )
     )

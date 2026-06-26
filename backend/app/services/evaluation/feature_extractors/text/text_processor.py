@@ -69,33 +69,65 @@ class TextProcessor:
 
         doc = nlp(text)
 
+        # Alphabetic tokens
         tokens = [
             token.text.lower()
             for token in doc
             if token.is_alpha
         ]
 
+        # Lemmas
         lemmas = [
             token.lemma_.lower()
             for token in doc
             if token.is_alpha
         ]
 
+        # Sentences
         sentences = [
             sentence.text.strip()
             for sentence in doc.sents
         ]
 
+        # Named entities
         named_entities = [
             entity.text
             for entity in doc.ents
         ]
 
+        # Stop words
+        stop_words = [
+            token.text.lower()
+            for token in doc
+            if token.is_alpha and token.is_stop
+        ]
+
+        # Content words
+        content_words = [
+            token.lemma_.lower()
+            for token in doc
+            if (
+                    token.is_alpha
+                    and token.pos_
+                    in {
+                        "NOUN",
+                        "PROPN",
+                        "VERB",
+                        "ADJ",
+                        "ADV",
+                    }
+            )
+        ]
+
         return TextDocument(
             original_text=text,
-            normalized_text=" ".join(doc.text.lower().split()),
+            normalized_text=" ".join(
+                doc.text.lower().split()
+            ),
             tokens=tokens,
             lemmas=lemmas,
             sentences=sentences,
             named_entities=named_entities,
+            stop_words=stop_words,
+            content_words=content_words,
         )
