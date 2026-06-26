@@ -41,3 +41,14 @@ class QuestionSource(str, Enum):
 class AnswerSource(str, Enum):
     TEXT = "TEXT"
     VOICE = "VOICE"
+class EvaluationSource(
+    str,
+    Enum,
+):
+    RULE_BASED = "RULE_BASED"
+
+    GEMINI = "GEMINI"
+
+    ML = "ML"
+
+    HYBRID = "HYBRID"

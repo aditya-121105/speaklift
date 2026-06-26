@@ -1,5 +1,9 @@
 # app/models/interview_session.py
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from app.models.interview_evaluation import (
+        InterviewEvaluation,
+    )
 from datetime import datetime
 
 from sqlalchemy import (
@@ -13,6 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
+    relationship,
 )
 
 from app.db.base import Base, TimestampMixin
@@ -20,6 +25,7 @@ from app.shared.enums import (
     ExperienceLevel,
     InterviewStatus,
 )
+
 
 
 class InterviewSession(Base, TimestampMixin):
