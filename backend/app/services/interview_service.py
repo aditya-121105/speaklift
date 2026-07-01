@@ -32,6 +32,11 @@ from app.services.interview_question_generator_service import (
 from app.shared.enums import (
     InterviewStatus,
 )
+from app.shared.exceptions import (
+    InterviewSessionNotFoundError,
+    InterviewQuestionNotFoundError,
+    InvalidSessionStateError,
+)
 
 
 class InterviewService:
@@ -53,7 +58,7 @@ class InterviewService:
 
         if not interview_session:
 
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found."
             )
 
@@ -100,7 +105,7 @@ class InterviewService:
         )
 
         if not first_question:
-            raise ValueError(
+            raise InvalidSessionStateError(
                 "No interview questions available."
             )
 
@@ -125,7 +130,7 @@ class InterviewService:
         )
 
         if not interview_session:
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found."
             )
         question = (
@@ -136,7 +141,7 @@ class InterviewService:
         )
 
         if not question:
-            raise ValueError(
+            raise InterviewQuestionNotFoundError(
                 "Question not found."
             )
 
@@ -144,7 +149,7 @@ class InterviewService:
                 question.interview_session_id
                 != session_id
         ):
-            raise ValueError(
+            raise InvalidSessionStateError(
                 "Question does not belong to session."
             )
 
@@ -219,7 +224,7 @@ class InterviewService:
         )
 
         if not interview_session:
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found."
             )
 
@@ -247,7 +252,7 @@ class InterviewService:
         )
 
         if not interview_session:
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found."
             )
 

@@ -1,6 +1,10 @@
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+
 from app.models.question_bank import QuestionBank
+from app.schemas.interview_engine.interview_objective import (
+    InterviewObjective,
+)
 from app.shared.enums import (
     ExperienceLevel,
     QuestionCategory,
@@ -11,17 +15,14 @@ class QuestionBankRepository:
 
     @staticmethod
     def create(
-            db: Session,
-            question: QuestionBank,
+        db: Session,
+        question: QuestionBank,
     ) -> QuestionBank:
 
         try:
             db.add(question)
-
             db.commit()
-
             db.refresh(question)
-
             return question
 
         except Exception:
@@ -55,19 +56,64 @@ class QuestionBankRepository:
             db.query(QuestionBank)
             .filter(
                 QuestionBank.role == role,
-                QuestionBank.experience_level
-                == experience_level,
+                QuestionBank.experience_level == experience_level,
                 QuestionBank.is_active.is_(True),
             )
         )
 
-        if category:
+        if category is not None:
             query = query.filter(
                 QuestionBank.category == category
             )
 
         return (
             query.order_by(
+                QuestionBank.usage_count.asc(),
+                func.random(),
+            )
+            .limit(limit)
+            .all()
+        )
+
+    @staticmethod
+    def find_best_questions(
+        db: Session,
+        role: str,
+        experience_level: ExperienceLevel,
+        objective: InterviewObjective,
+        limit: int = 5,
+    ) -> list[QuestionBank]:
+        """
+        Return the most relevant questions for a given interview objective.
+
+        Current Strategy (v1)
+
+        1. Match objective against skills.
+        2. Match objective against technologies.
+        3. Least-used questions first.
+        4. Randomize equally-used questions.
+
+        Future Strategy (v2)
+
+        Replace metadata matching with vector similarity search.
+        """
+
+        return (
+            db.query(QuestionBank)
+            .filter(
+                QuestionBank.role == role,
+                QuestionBank.experience_level == experience_level,
+                QuestionBank.is_active.is_(True),
+                or_(
+                    QuestionBank.skills.contains(
+                        [objective.name]
+                    ),
+                    QuestionBank.technologies.contains(
+                        [objective.name]
+                    ),
+                ),
+            )
+            .order_by(
                 QuestionBank.usage_count.asc(),
                 func.random(),
             )

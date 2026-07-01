@@ -1,341 +1,74 @@
 # backend/scripts/seed_question_bank.py
+"""
+Question Bank seed orchestrator.
+
+Responsibilities:
+  1. Import question collections from each role module.
+  2. Combine them into a single list.
+  3. Insert into the database.
+  4. Print an insertion summary.
+
+No interview questions live in this file.
+To add a new role: create backend/scripts/question_bank/<role>.py
+and import its QUESTIONS list below.
+"""
+
 import sys
 from pathlib import Path
 
-sys.path.append(
-    str(Path(__file__).resolve().parents[1])
-)
+sys.path.append(str(Path(__file__).resolve().parents[1]))
+
 from app.db.session import SessionLocal
+from app.models.question_bank import QuestionBank
 
-from app.models.question_bank import (
-    QuestionBank,
-)
+# ------------------------------------------------------------------
+# Role collections
+# Import QUESTIONS from each role module.
+# ------------------------------------------------------------------
+from question_bank.backend_developer import QUESTIONS as BACKEND_DEVELOPER_QUESTIONS
+from question_bank.python_developer import QUESTIONS as PYTHON_DEVELOPER_QUESTIONS
+from question_bank.ai_ml_engineer import QUESTIONS as AI_ML_ENGINEER_QUESTIONS
+from question_bank.data_scientist import QUESTIONS as DATA_SCIENTIST_QUESTIONS
+from question_bank.cloud_engineer import QUESTIONS as CLOUD_ENGINEER_QUESTIONS
+from question_bank.devops_engineer import QUESTIONS as DEVOPS_ENGINEER_QUESTIONS
 
-from app.shared.enums import (
-    DifficultyLevel,
-    ExperienceLevel,
-    QuestionCategory,
-    QuestionSource,
-)
+
+def _collect_all_questions() -> list[QuestionBank]:
+    """Combine all role question collections into one list."""
+    return [
+        *BACKEND_DEVELOPER_QUESTIONS,
+        *PYTHON_DEVELOPER_QUESTIONS,
+        *AI_ML_ENGINEER_QUESTIONS,
+        *DATA_SCIENTIST_QUESTIONS,
+        *CLOUD_ENGINEER_QUESTIONS,
+        *DEVOPS_ENGINEER_QUESTIONS,
+    ]
 
 
-def seed_questions():
+def _print_summary(questions: list[QuestionBank]) -> None:
+    """Print a breakdown of inserted questions by role."""
+    from collections import Counter
+    counts: Counter[str] = Counter(q.role for q in questions)
+    print("\n--- Seed Summary ---")
+    for role, count in sorted(counts.items()):
+        print(f"  {role}: {count} question(s)")
+    print(f"  TOTAL: {len(questions)} question(s)")
+    print("--------------------\n")
 
+
+def seed_questions() -> None:
     db = SessionLocal()
-
     try:
-
-        questions = [
-
-            # =========================
-            # INTRODUCTION
-            # =========================
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.INTRODUCTION,
-                difficulty=DifficultyLevel.EASY,
-                question_text="Tell me about yourself.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.INTRODUCTION,
-                difficulty=DifficultyLevel.EASY,
-                question_text="Why do you want to become a backend developer?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.INTRODUCTION,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What technologies have you worked with so far?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.INTRODUCTION,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What are your strengths as a developer?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.INTRODUCTION,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What are your career goals?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            # =========================
-            # PROJECT
-            # =========================
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.PROJECT,
-                difficulty=DifficultyLevel.EASY,
-                question_text="Tell me about a backend project you have worked on.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.PROJECT,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What was the biggest challenge in your project?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.PROJECT,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="Why did you choose your project's architecture?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.PROJECT,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="How would you improve your project if you had more time?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.PROJECT,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="Describe your contribution to the project.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            # =========================
-            # TECHNICAL
-            # =========================
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What is Flask?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What is a REST API?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What is JWT and why is it used?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="What is the difference between GET and POST requests?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="What is SQLAlchemy?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="What is database normalization?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="What is a database transaction?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="Explain authentication and authorization.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.HARD,
-                question_text="What are database indexes and why are they used?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.TECHNICAL,
-                difficulty=DifficultyLevel.HARD,
-                question_text="Explain the request lifecycle in a web application.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            # =========================
-            # BEHAVIORAL
-            # =========================
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.BEHAVIORAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="Describe a difficult problem you solved.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.BEHAVIORAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="How do you handle deadlines?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.BEHAVIORAL,
-                difficulty=DifficultyLevel.EASY,
-                question_text="How do you learn a new technology?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.BEHAVIORAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="Tell me about a time you worked in a team.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.BEHAVIORAL,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="Describe a situation where you made a mistake and how you handled it.",
-                source=QuestionSource.MANUAL,
-            ),
-
-            # =========================
-            # ROLE SPECIFIC
-            # =========================
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.ROLE_SPECIFIC,
-                difficulty=DifficultyLevel.EASY,
-                question_text="Why is backend development important in modern applications?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.ROLE_SPECIFIC,
-                difficulty=DifficultyLevel.EASY,
-                question_text="How would you design an API for a todo application?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.ROLE_SPECIFIC,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="What factors do you consider when designing a database schema?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.ROLE_SPECIFIC,
-                difficulty=DifficultyLevel.MEDIUM,
-                question_text="How would you secure a backend API?",
-                source=QuestionSource.MANUAL,
-            ),
-
-            QuestionBank(
-                role="Backend Developer",
-                experience_level=ExperienceLevel.FRESHER,
-                category=QuestionCategory.ROLE_SPECIFIC,
-                difficulty=DifficultyLevel.HARD,
-                question_text="How would you scale a backend service handling millions of requests?",
-                source=QuestionSource.MANUAL,
-            ),
-        ]
-
+        questions = _collect_all_questions()
         db.add_all(questions)
-
         db.commit()
-
-        print(
-            f"Successfully inserted {len(questions)} questions."
-        )
-
+        print(f"Successfully inserted {len(questions)} questions.")
+        _print_summary(questions)
     except Exception as e:
-
         db.rollback()
-
-        print(
-            f"Error: {e}"
-        )
-
+        print(f"Error: {e}")
+        raise
     finally:
-
         db.close()
 
 

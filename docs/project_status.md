@@ -1,0 +1,1229 @@
+# SpeakLift — Project Status Document
+
+> **Living Document** | Last Updated: July 1, 2026 | Audit Performed By: Staff Engineer Review
+>
+> This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
+
+---
+
+# 1. Project Overview
+
+## What is SpeakLift?
+
+SpeakLift is an AI-powered Interview and Viva Simulation Platform. Its stated mission is to help students, freshers, and job seekers transform their existing knowledge into communication confidence by simulating realistic interview experiences and providing actionable, AI-driven feedback.
+
+The platform currently exists as a backend API only. No frontend, no voice pipeline, no real-time features. The core interview session loop — create a session, receive questions, submit answers — is functionally complete. The evaluation engine is partially built at the infrastructure level but does not yet produce evaluations from real interviews.
+
+## Architecture
+
+SpeakLift uses a **Modular Monolith** architecture. All backend logic lives in a single deployable FastAPI application, organised into clear, bounded domain modules. Module boundaries are maintained through the layered folder structure:
+
+```
+API Endpoints → Services → Repositories → SQLAlchemy Models → PostgreSQL
+```
+
+AI components (NLP, embeddings) are isolated behind singleton resource managers and domain-specific service sub-packages. This means they can be replaced or extracted into microservices without touching business logic.
+
+The architecture was deliberately designed so that future services (Speech, Vision, Evaluation) can be split out without requiring schema or interface redesign. This is documented in ADR-004.
+
+## Technology Stack
+
+| Layer | Technology | Version |
+|---|---|---|
+| Language | Python | 3.10 |
+| API Framework | FastAPI | >=0.137.1 |
+| ORM | SQLAlchemy | >=2.0.51 |
+| Migrations | Alembic | >=1.18.4 |
+| Database | PostgreSQL | 16 |
+| Validation | Pydantic / pydantic-settings | v2 |
+| Auth | python-jose (JWT) + passlib (bcrypt) | Latest |
+| NLP | spaCy | >=3.8.14 (en_core_web_sm model) |
+| Embeddings | sentence-transformers | >=5.6.0 (BAAI/bge-base-en-v1.5) |
+| Grammar Check | language-tool-python | >=3.4.0 |
+| Text Stats | textstat | >=0.7.13 |
+| Tokenisation | NLTK | >=3.9.4 |
+| ASGI Server | Uvicorn | >=0.49.0 |
+| DB Driver | psycopg (v3, binary) | >=3.3.4 |
+| Containerisation | Docker / Docker Compose | postgres:16 image |
+| Test Runner | pytest | >=9.1.1 |
+| Package Manager | uv | Latest |
+
+## Design Philosophy
+
+1. **Layered architecture**: Strict separation between API, Service, Repository, and Model layers. No business logic in endpoints, no database queries in services.
+2. **Repository pattern**: All database access is encapsulated in repository classes. Services never import SQLAlchemy queries directly.
+3. **Singleton resource managers**: Expensive NLP models (spaCy, SentenceTransformer) are loaded once at runtime and shared via class-level caching.
+4. **Domain schemas over ORM exposure**: Runtime domain objects (InterviewContext, InterviewPlan, CandidateProfile) are Pydantic models, not ORM models. This decouples AI logic from the persistence layer entirely.
+5. **Provider abstraction readiness**: ADR-003 defines an LLM provider abstraction layer. It has not been implemented yet, but the architecture anticipates it.
+6. **Progressive enhancement**: The question bank currently uses metadata matching (skills/technologies arrays). The architecture documents that future versions will upgrade to vector similarity search without changing the public interface.
+
+---
+
+# 2. Folder Structure
+
+## Root
+
+```
+/
+├── backend/          Core backend application
+├── docs/             Architecture docs, ADRs, requirements
+├── frontend/         Empty — not started
+├── infrastructure/   Docker Compose + AWS/nginx placeholders
+├── pyproject.toml    Project metadata and dependencies
+├── alembic.ini       Alembic configuration (script_location points to backend/alembic)
+├── .env              Root-level environment file (used by alembic.ini)
+└── uv.lock           uv lockfile for reproducible installs
+```
+
+## backend/
+
+```
+backend/
+├── app/              Main application package
+├── alembic/          Database migrations
+├── scripts/          Developer utility scripts
+├── tests/            Test suite
+├── .env              Backend-specific environment variables
+├── .env.example      Environment variable template
+└── .python-version   Pins Python 3.10
+```
+
+## backend/app/
+
+The primary application package. Contains all business logic.
+
+```
+app/
+├── api/              HTTP layer (routers and endpoints)
+├── core/             Infrastructure concerns (config, security, NLP, DB)
+├── db/               SQLAlchemy base and session factory
+├── dependencies/     FastAPI dependency injection providers
+├── models/           SQLAlchemy ORM models (database schema)
+├── repositories/     Data access objects
+├── schemas/          Pydantic models (request/response + domain objects)
+├── services/         Business logic
+├── shared/           Cross-cutting enums, exceptions, utilities
+└── main.py           FastAPI application entry point
+```
+
+### backend/app/api/v1/endpoints/
+**Purpose**: HTTP request handlers. Thin layer — validate input, call service, return response.
+**Current files**: `auth.py`, `health.py`, `interview_sessions.py`
+**Dependencies**: Services, dependencies (auth, database), schemas
+
+### backend/app/core/
+**Purpose**: Application-wide infrastructure concerns.
+**Current files**:
+- `config.py` — Pydantic Settings reading from `.env`
+- `security.py` — bcrypt hashing, JWT creation and decoding
+- `nlp.py` — Singleton loader for spaCy `en_core_web_sm`
+- `logging.py` — **Empty file** (placeholder)
+- `database.py` — Re-exports `engine` and `SessionLocal` (thin wrapper over `db/session.py`)
+
+### backend/app/db/
+**Purpose**: SQLAlchemy engine, session factory, and base class.
+**Current files**:
+- `base.py` — `Base` (DeclarativeBase) + `TimestampMixin` (created_at, updated_at)
+- `session.py` — Creates `engine` from `settings.DATABASE_URL`, creates `SessionLocal`
+
+### backend/app/dependencies/
+**Purpose**: FastAPI dependency providers for injection into endpoints.
+**Current files**:
+- `auth.py` — `get_current_user` — extracts JWT from Bearer header, verifies, returns User
+- `database.py` — `get_db` — yields a `SessionLocal` instance, closes on exit
+
+### backend/app/models/
+**Purpose**: SQLAlchemy ORM models. Define the database schema.
+**Current files**: `user.py`, `profile.py`, `interview_session.py`, `interview_question.py`, `interview_answer.py`, `interview_evaluation.py`, `question_bank.py`
+**Dependencies**: `app.db.base`, `app.shared.enums`
+
+### backend/app/repositories/
+**Purpose**: All database access. Services never query the DB directly.
+**Current files**: `user_repository.py`, `interview_session_repository.py`, `interview_question_repository.py`, `interview_answer_repository.py`, `interview_evaluation_repository.py`, `question_bank_repository.py`
+**Dependencies**: SQLAlchemy Session, ORM models
+
+### backend/app/schemas/
+**Purpose**: Pydantic models for API request/response validation and runtime domain objects.
+**Sub-packages**:
+- `evaluation/` — `TextDocument`, `TextFeatureVector`
+- `interview_engine/` — `CandidateProfile`, `JobProfile`, `InterviewContext`, `InterviewPhase`, `InterviewObjective`, `InterviewPlan`
+**Current files**: `auth.py`, `interview_session.py`, `interview_question.py`, `interview_answer.py`, `interview_evaluation.py`
+
+### backend/app/services/
+**Purpose**: All business logic. Services orchestrate repositories, AI modules, and domain logic.
+**Top-level files**: `auth_service.py`, `interview_session_service.py`, `interview_service.py`, `interview_answer_service.py`, `interview_question_generator_service.py`, `question_bank_service.py`
+**Sub-packages**:
+- `interview_engine/` — `InterviewContextBuilder`, `InterviewPlanner`, `QuestionSelector`
+- `evaluation/` — Feature extractors, embedding manager, constants, keywords, utils
+
+### backend/app/shared/
+**Purpose**: Cross-cutting concerns shared across all modules.
+**Current files**:
+- `enums.py` — All domain enums
+- `exceptions.py` — `UserAlreadyExistsError`, `InvalidCredentialsError`
+- `responses.py` — **Empty file** (placeholder for standardised API response wrappers)
+
+### backend/alembic/
+**Purpose**: Database migration scripts managed by Alembic.
+**versions/**: 4 migration files tracking the full schema history.
+
+### backend/scripts/
+**Purpose**: Developer utility scripts (not part of the application itself).
+**Current files**: `seed_question_bank.py` (orchestration-only seed entry point), `test_question_generation.py` (debug script for question generation pipeline)
+
+### backend/scripts/question_bank/
+**Purpose**: Modular question bank seed package. Each file owns exactly one role's question collection and exposes a `QUESTIONS: list[QuestionBank]` variable.
+**Design rule**: `seed_question_bank.py` imports and combines all `QUESTIONS` lists — it never contains question data itself.
+**Current files**:
+- `__init__.py` — package marker and documentation
+- `common.py` — shared `create_question()` factory, constants, and path bootstrap
+- `backend_developer.py` — Backend Developer questions
+- `python_developer.py` — Python Developer questions
+- `ai_ml_engineer.py` — AI/ML Engineer questions
+- `data_scientist.py` — Data Scientist questions
+- `cloud_engineer.py` — Cloud Engineer questions
+- `devops_engineer.py` — DevOps Engineer questions
+
+**Adding a new role**: Create one new file in this folder and import its `QUESTIONS` in `seed_question_bank.py`. Nothing else changes.
+
+### backend/tests/
+**Purpose**: Automated test suite.
+**Current structure**: Only `tests/evaluation/` has tests. Two test files covering `StatisticsFeatureExtractor` and `VocabularyFeatureExtractor`.
+
+### docs/
+**Purpose**: Project documentation and architectural decisions.
+**Current files**:
+- `architecture/architecture-v1.md` — High-level architecture overview
+- `architecture/sprint-roadmap.md` — 12-sprint development plan
+- `architecture/api-contract-v1.md` — API contract specification
+- `architecture/database-design-v1.md` — Original database design (partially diverged from implementation)
+- `decisions/ADR-001 through ADR-004` — Framework, database, LLM abstraction, modular monolith decisions
+- `requirements/project-vision.md` — Product vision and target users
+
+### infrastructure/
+**Purpose**: Deployment configuration.
+**Current files**: `docker/docker-compose.yml` (PostgreSQL container only), `docker/backend.Dockerfile` (empty), `aws/` (empty), `nginx/` (empty)
+
+### frontend/
+**Purpose**: Frontend application. **Completely empty.**
+
+---
+
+# 3. Module Inventory
+
+## app/main.py
+**Purpose**: FastAPI application entry point.
+**Status**: Complete (minimal and correct).
+**Implementation**: Creates the `FastAPI` app instance with title/description, mounts the API router. No middleware, no startup/shutdown events, no CORS, no exception handlers.
+**Missing**: CORS middleware, global exception handler, startup events (e.g. model warm-up), request logging middleware.
+
+---
+
+## app/core/config.py
+**Purpose**: Centralised configuration loading from environment variables.
+**Status**: Complete.
+**Implementation**: Pydantic `BaseSettings` class reading `APP_NAME`, `APP_VERSION`, `DATABASE_URL`, `JWT_SECRET_KEY`, `JWT_ALGORITHM`, `ACCESS_TOKEN_EXPIRE_MINUTES` from `.env`.
+**Missing**: No `CORS_ORIGINS`, no `DEBUG` flag, no environment-specific profiles, no secrets rotation.
+
+---
+
+## app/core/security.py
+**Purpose**: Password hashing and JWT operations.
+**Status**: Complete for current needs.
+**Implementation**: bcrypt via passlib, JWT creation and decoding via python-jose. Tokens contain `sub` (user_id as string), `exp`, and `type: "access"`.
+**Missing**: Refresh token support, token revocation/blacklist, `is_active` check during decode.
+
+---
+
+## app/core/nlp.py
+**Purpose**: Singleton loader for spaCy NLP model.
+**Status**: Complete.
+**Implementation**: `NLPResourceManager` with class-level `_spacy_model` cache. Loads `en_core_web_sm` on first call.
+**Missing**: Error handling if model is not installed, async-safe loading for concurrent startup requests.
+
+---
+
+## app/core/logging.py
+**Purpose**: Centralised logging configuration.
+**Status**: Empty placeholder. No implementation.
+**Missing**: Everything — structured logging setup, request ID injection, log level from config.
+
+---
+
+## app/db/base.py
+**Purpose**: SQLAlchemy declarative base and timestamp mixin.
+**Status**: Complete.
+**Implementation**: `Base(DeclarativeBase)` + `TimestampMixin` providing `created_at`/`updated_at` with timezone-aware timestamps and `server_default=func.now()`.
+**Note**: `updated_at` uses `onupdate=func.now()` which works correctly.
+
+---
+
+## app/db/session.py
+**Purpose**: SQLAlchemy engine and session factory.
+**Status**: Complete.
+**Implementation**: `create_engine` with `echo=True` (logs all SQL — this should be disabled or made configurable for production). `SessionLocal` with `autocommit=False`, `autoflush=False`.
+**Issue**: `echo=True` is hardcoded. In production this will flood logs.
+
+---
+
+## app/models/user.py
+**Purpose**: User authentication model.
+**Status**: Complete.
+**Fields**: `id`, `email` (unique, indexed), `password_hash`, `is_active`, `is_verified`.
+**Missing**: No `last_login_at`, no relationships defined (Profile, Sessions), no `is_superuser`.
+
+---
+
+## app/models/profile.py
+**Purpose**: User profile / resume metadata.
+**Status**: Minimal. Structural skeleton only.
+**Fields**: `id`, `user_id` (FK, unique), `full_name`, `experience_level`.
+**Missing**: `education`, `target_role`, `phone`, `linkedin_url`, `resume_url`. The database design document specifies significantly more fields. No relationship back to `User`.
+
+---
+
+## app/models/interview_session.py
+**Purpose**: Represents one interview practice session.
+**Status**: Complete for current scope.
+**Fields**: `id`, `user_id`, `role`, `experience_level`, `duration_minutes`, `resume_id` (nullable int — no FK), `job_description`, `status`, `started_at`, `completed_at`.
+**Missing**: `resume_id` has no foreign key constraint (Resume table doesn't exist yet). No SQLAlchemy relationships defined.
+
+---
+
+## app/models/interview_question.py
+**Purpose**: Individual question within a session.
+**Status**: Complete.
+**Fields**: `id`, `interview_session_id`, `parent_question_id` (self-referential FK for follow-ups), `question_text`, `question_type` (PRIMARY/FOLLOW_UP), `question_category`, `question_order`, `is_asked`.
+**Missing**: No `asked_at` timestamp, no relationships.
+
+---
+
+## app/models/interview_answer.py
+**Purpose**: Candidate's answer to a question.
+**Status**: Complete.
+**Fields**: `id`, `interview_session_id`, `interview_question_id`, `transcript`, `answer_source` (TEXT/VOICE), `answer_duration_seconds`.
+**Missing**: No `audio_url` for voice answers, no relationship to `InterviewQuestion`.
+
+---
+
+## app/models/interview_evaluation.py
+**Purpose**: AI-generated evaluation scores for a completed session.
+**Status**: Schema complete, pipeline not connected.
+**Fields**: `id`, `interview_session_id` (unique FK with CASCADE), `technical_score`, `communication_score`, `behavioral_score`, `confidence_score`, `overall_score`, `strengths` (JSONB), `weaknesses` (JSONB), `recommendations` (JSONB), `evaluation_source`.
+**Missing**: No relationship to `InterviewSession`. Score validation (no min/max constraints in the model).
+
+---
+
+## app/models/question_bank.py
+**Purpose**: Central repository of reusable interview questions with AI metadata.
+**Status**: Complete and well-designed.
+**Fields**: `id`, `role`, `experience_level`, `category`, `difficulty`, `question_text`, `skills` (JSON), `technologies` (JSON), `expected_concepts` (JSON), `has_follow_up`, `source`, `usage_count`, `is_active`.
+**Notes**: The AI metadata fields (`skills`, `technologies`, `expected_concepts`) enable both metadata-based and future semantic retrieval. `usage_count` enables usage-weighted randomised selection. Well thought out.
+
+---
+
+## app/repositories/user_repository.py
+**Purpose**: User database access.
+**Status**: Complete for current scope.
+**Methods**: `get_by_email`, `create`, `get_by_id`.
+**Missing**: `update`, `delete`, `get_all` (admin use).
+
+---
+
+## app/repositories/interview_session_repository.py
+**Purpose**: Interview session database access.
+**Status**: Complete.
+**Methods**: `create`, `get_by_id`, `get_by_user`, `get_by_id_and_user`, `save`.
+**Notes**: `get_by_id_and_user` correctly enforces ownership — users cannot access other users' sessions.
+
+---
+
+## app/repositories/interview_question_repository.py
+**Purpose**: Interview question database access.
+**Status**: Complete.
+**Methods**: `create`, `create_many`, `get_by_id`, `get_by_session`, `get_first_unasked_question`, `save`.
+**Notes**: `get_first_unasked_question` is critical for the interview flow and correctly filters `is_asked=False` ordered by `question_order`.
+
+---
+
+## app/repositories/interview_answer_repository.py
+**Purpose**: Answer database access.
+**Status**: Complete.
+**Methods**: `create`, `get_by_id`, `get_by_question`, `get_by_session`.
+
+---
+
+## app/repositories/interview_evaluation_repository.py
+**Purpose**: Evaluation database access.
+**Status**: Complete.
+**Methods**: `create`, `get_by_session`, `save`.
+
+---
+
+## app/repositories/question_bank_repository.py
+**Purpose**: Question bank database access with intelligent retrieval logic.
+**Status**: Complete and well-implemented.
+**Methods**: `create`, `get_by_id`, `get_questions`, `find_best_questions`, `increment_usage_count`.
+**Notes**: `find_best_questions` uses PostgreSQL array containment operators (`@>`) via SQLAlchemy to match questions against objectives. This is the most sophisticated repository in the codebase. `get_questions` orders by `usage_count ASC, random()` — ensuring least-used questions get priority.
+
+---
+
+## app/services/auth_service.py
+**Purpose**: User registration and login business logic.
+**Status**: Complete.
+**Implementation**: `register_user` checks for duplicate email, creates `User` + `Profile` atomically in a single transaction with `db.flush()` before commit. `login_user` verifies password and returns JWT token.
+**Missing**: Email verification flow, password reset, audit logging.
+
+---
+
+## app/services/interview_session_service.py
+**Purpose**: Interview session lifecycle management.
+**Status**: Complete for current scope.
+**Methods**: `create_interview_session`, `get_interview_session`, `get_user_interview_sessions`.
+
+---
+
+## app/services/interview_service.py
+**Purpose**: Core interview orchestration — the main interview loop.
+**Status**: Functionally complete.
+**Methods**: `start_interview` (generates questions on first call, sets status to IN_PROGRESS), `submit_answer` (saves answer, marks question asked, returns next question or completes session), `get_questions`, `get_answers`.
+**Issues**: Uses `datetime.utcnow()` (deprecated in Python 3.12+). `get_answers` passes `session_id` as keyword arg `session_id` but `InterviewAnswerRepository.get_by_session` expects `session_id` positional — works but inconsistent.
+
+---
+
+## app/services/interview_answer_service.py
+**Purpose**: Alternative answer submission service.
+**Status**: Partially redundant with `interview_service.py`.
+**Issue**: This service partially duplicates the answer submission logic in `InterviewService.submit_answer`. `InterviewAnswerService.submit_answer` does NOT mark the question as `is_asked=True` and does NOT advance to the next question. These are separate services implementing overlapping concerns. **Technical debt.**
+
+---
+
+## app/services/interview_question_generator_service.py
+**Purpose**: Generate a set of interview questions from the question bank based on interview duration.
+**Status**: Complete.
+**Implementation**: `get_question_distribution` maps interview duration to per-category counts (3 tiers: ≤15 min, ≤30 min, 30+ min). Fetches questions from bank per category, creates `InterviewQuestion` records.
+**Issues**: Uses `print()` for debug output — should use logger. Does not use the `InterviewPlanner` or `InterviewContextBuilder` — these are parallel implementations with overlapping responsibility.
+
+---
+
+## app/services/question_bank_service.py
+**Purpose**: Question creation and retrieval from the question bank.
+**Status**: Complete for current scope.
+**Methods**: `create_question`, `get_questions`.
+**Missing**: Update, deactivate, bulk import, admin management endpoints.
+
+---
+
+## app/services/interview_engine/interview_context_builder.py
+**Purpose**: Build the `InterviewContext` runtime domain object.
+**Status**: Stub implementation.
+**Implementation**: `_build_candidate_profile` returns an empty `CandidateProfile()`. `_build_job_profile` returns only `role` and `experience_level`. Everything else is empty.
+**Notes**: Marked in comments as "Temporary implementation. Resume Parsing Pipeline will populate this in a later sprint." The architecture is correct — the builder is the right pattern — but it currently produces empty context.
+
+---
+
+## app/services/interview_engine/interview_planner.py
+**Purpose**: Generate a structured `InterviewPlan` from an `InterviewContext`.
+**Status**: Complete as a deterministic rule-based planner.
+**Implementation**: Creates 5 phases (Introduction, Projects, Technical, Behavioral, Closing) with time allocation weights (10%, 25%, 45%, 15%, 5%). Each phase gets `InterviewObjective` objects. Time is distributed proportionally with the last phase absorbing remainder.
+**Notes**: The planner is not currently used in the actual interview flow. `InterviewService` calls `InterviewQuestionGeneratorService` directly, bypassing the planner entirely. **Architecture inconsistency.**
+
+---
+
+## app/services/interview_engine/question_selector.py
+**Purpose**: Select questions from the question bank that satisfy an `InterviewPlan`.
+**Status**: Implemented but bypassed.
+**Issue**: `QuestionSelector` is not called anywhere in the live interview flow. `InterviewService` calls `InterviewQuestionGeneratorService` instead. This is a second parallel implementation. **Significant architectural inconsistency.**
+
+---
+
+## app/services/evaluation/embeddings/embedding_manager.py
+**Purpose**: Singleton loader for sentence-transformer embedding model.
+**Status**: Complete as infrastructure.
+**Implementation**: `EmbeddingManager` class with `_embedding_model` cache. Loads `BAAI/bge-base-en-v1.5` on first call.
+**Missing**: Not called from any service. The embedding model is loaded but never used in any pipeline.
+
+---
+
+## app/services/evaluation/feature_extractors/text/text_processor.py
+**Purpose**: Convert raw interview text into a structured `TextDocument` using spaCy.
+**Status**: Complete and well-implemented.
+**Implementation**: Extracts tokens, lemmas, sentences, named entities, stop words, and content words (NOUN, PROPN, VERB, ADJ, ADV). Returns a `TextDocument` Pydantic model.
+
+---
+
+## app/services/evaluation/feature_extractors/text/statistics_feature_extractor.py
+**Purpose**: Extract numerical statistical features from processed interview answers.
+**Status**: Complete.
+**Implementation**: Computes total_answers, total_words, unique_words, averages, vocabulary richness, empty/short/long answer counts, average duration.
+
+---
+
+## app/services/evaluation/feature_extractors/text/vocabulary_feature_extractor.py
+**Purpose**: Extract vocabulary and lexical density features.
+**Status**: Complete.
+**Implementation**: Computes unique_lemmas, vocabulary_richness, average_lemma_length, content_word_count, stop_word_count, lexical_density, stop_word_ratio.
+
+---
+
+## app/services/evaluation/feature_extractors/text/utils.py
+**Purpose**: Shared text utility functions.
+**Status**: Complete.
+**Implementation**: `TextUtils` class with normalize_text, tokenize_words, split_sentences, word_count, unique_word_count, average_word_length, average_sentence_length.
+**Note**: This duplicates some functionality in `TextProcessor`. `TextProcessor` uses spaCy; `TextUtils` uses regex. The relationship between the two is unclear.
+
+---
+
+## app/services/evaluation/constants.py
+## app/services/evaluation/keywords.py
+## app/services/evaluation/utils.py
+## app/services/evaluation/knowledge_base/__init__.py
+**Status**: All **completely empty** placeholder files.
+
+---
+
+## app/shared/enums.py
+**Purpose**: All domain enumerations.
+**Status**: Complete.
+**Enums**: `InterviewStatus`, `ExperienceLevel`, `QuestionType`, `QuestionCategory`, `DifficultyLevel`, `QuestionSource`, `AnswerSource`, `EvaluationSource`.
+
+---
+
+## app/shared/exceptions.py
+**Purpose**: Custom domain exceptions.
+**Status**: Minimal — only 2 exceptions defined.
+**Missing**: `SessionNotFoundError`, `QuestionNotFoundError`, `EvaluationError`, `InvalidSessionStateError`. Currently most services raise generic `ValueError`.
+
+---
+
+## app/shared/responses.py
+**Status**: **Empty placeholder.**
+**Missing**: Standardised API response wrapper (`{ "success": true, "data": {}, "message": "" }`) as specified in `api-contract-v1.md`.
+
+---
+
+# 4. Database Status
+
+## Migrations Chain
+
+```
+f0f592e2c169 (initial)
+    → 02e119cac187 (interview_answers)
+        → bd4b041b5ffe (interview_evaluations)
+            → 0144ba5aca6b (question_bank metadata)
+```
+
+All 4 migrations are linear with no branches. Migration chain is clean.
+
+## Table Status
+
+| Table | Purpose | Relationships | Completion | Missing Fields | Notes |
+|---|---|---|---|---|---|
+| `users` | Authentication | → profiles, → interview_sessions | ✅ Complete | `last_login_at`, `is_superuser` | `echo=True` on engine will log all queries |
+| `profiles` | User profile metadata | users.id (unique FK) | ⚠️ Skeleton | `education`, `target_role`, `phone`, `linkedin_url`, `resume_url` | Far fewer fields than database design doc specifies |
+| `interview_sessions` | Session lifecycle | users.id (FK), → interview_questions | ✅ Complete | None critical | `resume_id` is an int with no FK — Resume table not yet created |
+| `interview_questions` | Per-session questions | interview_sessions.id (FK), self-referential parent_question_id | ✅ Complete | `asked_at` timestamp | Self-referential FK supports follow-up question tree |
+| `interview_answers` | Candidate transcripts | interview_sessions.id (FK), interview_questions.id (FK) | ✅ Complete | `audio_url` | `answer_source` enum supports VOICE but no audio storage yet |
+| `interview_evaluations` | AI evaluation results | interview_sessions.id (CASCADE FK, unique) | ✅ Schema complete | Score min/max constraints | Unique constraint ensures one evaluation per session |
+| `question_bank` | Reusable question library | None | ✅ Complete | None | Most advanced table — JSON metadata supports future vector search |
+
+## Key Design Observations
+
+- **Primary keys are INTEGER**, not UUID. The database design document specified UUID. This is a divergence from the original design. Integer PKs are fine for this scale but may require a migration if global uniqueness is needed later.
+- `interview_evaluations.interview_session_id` has `ondelete=CASCADE` — correct.
+- `profiles.user_id` has a `UNIQUE` constraint — one profile per user enforced at DB level.
+- `question_bank.skills` and `question_bank.technologies` are stored as `JSON` (not `JSONB`). This means they cannot be indexed efficiently. For future vector search, these should move to `JSONB` or a dedicated vector column.
+- No indexes beyond the primary key and the unique email index on `users`. As data grows, `interview_sessions.user_id`, `interview_questions.interview_session_id`, and `interview_answers.interview_session_id` will need indexes.
+
+## Future Tables (Not Yet Created)
+
+| Table | Required By |
+|---|---|
+| `resumes` | Resume-based interview personalisation |
+| `viva_sessions` | Viva mode |
+| `user_progress` | Analytics dashboard |
+| `session_analytics` | Progress tracking |
+| `recommendations` | Personalised improvement plan |
+
+---
+
+# 5. API Status
+
+## Base URL: `/api/v1`
+
+### Health Endpoints
+
+| Route | Method | Purpose | Status | Notes |
+|---|---|---|---|---|
+| `/` | GET | Welcome message | ✅ Complete | Returns static JSON |
+| `/health` | GET | App health check | ✅ Complete | No actual health assertions |
+| `/db-health` | GET | Database connectivity check | ✅ Complete | Executes `SELECT 1` |
+
+### Auth Endpoints (`/auth`)
+
+| Route | Method | Purpose | Status | Notes |
+|---|---|---|---|---|
+| `/auth/register` | POST | User registration | ✅ Complete | Creates User + Profile atomically |
+| `/auth/login` | POST | Login + JWT | ✅ Complete | Returns `access_token` |
+| `/auth/me` | GET | Get current user | ✅ Complete | Requires Bearer token |
+
+**Missing from auth**: POST `/auth/refresh`, POST `/auth/logout`, POST `/auth/forgot-password`, GET `/auth/verify-email/{token}`
+
+### Interview Session Endpoints (`/interviews`)
+
+| Route | Method | Purpose | Status | Notes |
+|---|---|---|---|---|
+| `POST /interviews` | POST | Create session | ✅ Complete | Validates duration 15-60 min |
+| `GET /interviews` | GET | List user sessions | ✅ Complete | Ordered by created_at DESC |
+| `GET /interviews/{id}` | GET | Session detail | ✅ Complete | Returns full detail response |
+| `POST /interviews/{id}/start` | POST | Start interview, get first question | ✅ Complete | Generates questions on first call |
+| `POST /interviews/{id}/answer` | POST | Submit answer, get next question | ✅ Complete | Returns `interview_completed` flag |
+| `GET /interviews/{id}/questions` | GET | Get all questions | ✅ Complete | Returns ordered list |
+| `GET /interviews/{id}/answers` | GET | Get all answers | ✅ Complete | Returns answer list |
+
+**Missing**: POST `/interviews/{id}/abandon`, GET `/interviews/{id}/evaluation`, POST `/interviews/{id}/evaluate`
+
+### Ownership Enforcement
+All interview endpoints correctly validate that the session belongs to the authenticated user via `get_by_id_and_user`. Returning 404 (not 403) for unauthorised access is a common security pattern to avoid information disclosure.
+
+### Error Handling
+All services raise `ValueError` for business logic errors. Endpoints catch `ValueError` and return `HTTP 404`. This is incorrect in some cases — e.g. a question not belonging to a session should be `HTTP 400` or `HTTP 403`, not `404`. There is no global exception handler in `main.py`.
+
+### API Contract Divergence
+The `api-contract-v1.md` specifies a standardised envelope `{ "success": true, "data": {}, "message": "" }`. The actual API returns raw Pydantic models without this envelope. `shared/responses.py` was intended to implement this but is empty.
+
+---
+
+# 6. Services Status
+
+## AuthService
+**Responsibilities**: User registration (with atomic User+Profile creation), password hashing, JWT generation and validation.
+**Dependencies**: `UserRepository`, `security.py`, `Profile` model.
+**Implementation**: ~95%
+**Current Limitations**: No email verification, no refresh tokens, no password reset. Profile is created with only `full_name` — no skills or target role captured at registration.
+
+---
+
+## InterviewSessionService
+**Responsibilities**: Create, retrieve, and list interview sessions.
+**Dependencies**: `InterviewSessionRepository`, `InterviewSession` model.
+**Implementation**: ~80%
+**Current Limitations**: No session abandonment logic, no ability to update session metadata after creation.
+
+---
+
+## InterviewService
+**Responsibilities**: Core interview loop orchestration. Start interview, advance through questions, submit answers, detect completion.
+**Dependencies**: `InterviewSessionRepository`, `InterviewQuestionRepository`, `InterviewAnswerRepository`, `InterviewQuestionGeneratorService`.
+**Implementation**: ~75%
+**Current Limitations**:
+- Uses deprecated `datetime.utcnow()`.
+- Bypasses the `InterviewPlanner` and `QuestionSelector` that were built for this purpose.
+- No follow-up question generation.
+- No evaluation triggered on completion.
+- `get_answers` has a parameter naming inconsistency.
+
+---
+
+## InterviewAnswerService
+**Responsibilities**: Submit answers to questions.
+**Dependencies**: `InterviewAnswerRepository`, `InterviewQuestionRepository`, `InterviewSessionRepository`.
+**Implementation**: ~60%
+**Current Limitations**: Does NOT mark questions as `is_asked=True`. Does NOT advance to next question. Partially duplicates `InterviewService.submit_answer`. Should be merged or clearly differentiated. **This service is not currently used by any endpoint.**
+
+---
+
+## InterviewQuestionGeneratorService
+**Responsibilities**: Generate a set of interview questions from the question bank based on duration.
+**Dependencies**: `QuestionBankRepository`, `InterviewQuestionRepository`.
+**Implementation**: ~80%
+**Current Limitations**:
+- Does not use `InterviewPlanner` or `InterviewContext`.
+- Does not use `QuestionSelector`.
+- Uses `print()` instead of a logger.
+- Does not increment `usage_count` atomically — increments in memory then relies on session commit.
+
+---
+
+## QuestionBankService
+**Responsibilities**: Create and retrieve questions from the question bank.
+**Dependencies**: `QuestionBankRepository`.
+**Implementation**: ~50%
+**Current Limitations**: No management API endpoints. No bulk import. No question deactivation endpoint. No admin-facing features.
+
+---
+
+## InterviewContextBuilder (interview_engine/)
+**Responsibilities**: Build the `InterviewContext` runtime domain object from session data and (future) resume + JD parsing.
+**Dependencies**: `InterviewSession`, `CandidateProfile`, `JobProfile`, `InterviewContext` schemas.
+**Implementation**: ~20%
+**Current Limitations**: Returns empty `CandidateProfile`. `JobProfile` has only `role` and `experience_level`. The builder exists and has the right interface, but produces no useful context. Not called from any endpoint.
+
+---
+
+## InterviewPlanner (interview_engine/)
+**Responsibilities**: Generate a structured `InterviewPlan` from an `InterviewContext`.
+**Dependencies**: `InterviewContext`, `InterviewPhase`, `InterviewObjective`, `InterviewPlan` schemas.
+**Implementation**: ~85%
+**Current Limitations**: Architecturally complete and well-designed. Deterministic and predictable. However, it is **not called in any live code path**. The plan it generates is unused.
+
+---
+
+## QuestionSelector (interview_engine/)
+**Responsibilities**: Select questions from the question bank that satisfy an `InterviewPlan`.
+**Dependencies**: `QuestionBankRepository`, `InterviewPlan`, `InterviewSession`.
+**Implementation**: ~60%
+**Current Limitations**: Implemented but **never called**. Uses generic `get_questions` instead of `find_best_questions` — so the objective-matching logic in the repository is also unused. Does not commit the usage count increments.
+
+---
+
+## TextProcessor (evaluation/feature_extractors/text/)
+**Responsibilities**: Convert raw text into a structured `TextDocument` via spaCy.
+**Dependencies**: `NLPResourceManager`, `TextDocument` schema.
+**Implementation**: ~100%
+**Notes**: Well-implemented and fully functional. Has unit tests.
+
+---
+
+## StatisticsFeatureExtractor (evaluation/feature_extractors/text/)
+**Responsibilities**: Extract numerical text statistics from a list of `TextDocument` objects.
+**Dependencies**: `TextDocument`.
+**Implementation**: ~100%
+**Notes**: Well-implemented and has unit tests passing.
+
+---
+
+## VocabularyFeatureExtractor (evaluation/feature_extractors/text/)
+**Responsibilities**: Extract vocabulary and lexical density features.
+**Dependencies**: `TextDocument`.
+**Implementation**: ~100%
+**Notes**: Well-implemented. The "test" in `test_vocabulary_feature_extractor.py` is a script (no assertions), not a proper test.
+
+---
+
+## EmbeddingManager (evaluation/embeddings/)
+**Responsibilities**: Singleton loader for `BAAI/bge-base-en-v1.5` sentence transformer.
+**Dependencies**: `sentence_transformers`.
+**Implementation**: ~100% as infrastructure.
+**Notes**: Model loading works correctly. However, this manager is **not called from anywhere in the application**. The evaluation pipeline that would use it has not been implemented.
+
+---
+
+## Evaluation Pipeline (evaluation/ — constants, keywords, utils, knowledge_base/)
+**Status**: All files are **empty**. No implementation exists beyond the feature extractors.
+**Missing**: Keyword matching logic, scoring rules, evaluation orchestrator, LLM integration, report generator.
+
+---
+
+# 7. AI Pipeline Status
+
+## spaCy
+
+**Model**: `en_core_web_sm`
+**Loader**: `NLPResourceManager.get_spacy_model()` (singleton)
+**Status**: Infrastructure complete. Model loads correctly.
+**Used in**: `TextProcessor` → called from unit tests only. Not called from any interview answer flow.
+**Capabilities enabled**: Tokenisation, lemmatisation, POS tagging, sentence segmentation, named entity recognition, stop word detection.
+**Missing**: No pipeline hook for on-startup warm-up. First request that triggers NLP will have latency.
+
+---
+
+## Sentence Transformers
+
+**Model**: `BAAI/bge-base-en-v1.5`
+**Loader**: `EmbeddingManager.get_model()` (singleton)
+**Status**: Infrastructure complete. Loads correctly.
+**Used in**: Nowhere. The `EmbeddingManager` is defined but never called.
+**Intended Use**: Semantic similarity scoring between candidate answers and expected concepts.
+**Missing**: The entire semantic evaluation pipeline. The embedding model is a dependency that has no consumer yet.
+
+---
+
+## Evaluation Engine
+
+**Status**: Partial infrastructure, no active pipeline.
+
+What exists:
+- `TextProcessor` — converts text → `TextDocument`
+- `StatisticsFeatureExtractor` — extracts stats features
+- `VocabularyFeatureExtractor` — extracts vocab features
+- `TextFeatureVector` schema — rich feature vector definition with 20+ fields
+- `InterviewEvaluation` model — schema ready to store scores
+- `EmbeddingManager` — ready to produce embeddings
+
+What is missing:
+- `KeywordFeatureExtractor` — `keywords.py` is empty
+- `ReadabilityFeatureExtractor` — not started (textstat is installed but not used)
+- `GrammarFeatureExtractor` — not started (language-tool-python is installed but not used)
+- `SemanticFeatureExtractor` — not started (would use `EmbeddingManager`)
+- Feature fusion service — combines all feature vectors into `TextFeatureVector`
+- Scoring rules engine — maps `TextFeatureVector` to domain scores
+- Evaluation orchestrator — drives the full pipeline end-to-end
+- Evaluation API endpoint — `POST /interviews/{id}/evaluate` not implemented
+- LLM integration — for feedback generation (strengths, weaknesses, recommendations)
+
+The `TextFeatureVector` schema already declares fields for `sentiment_score`, `readability_score`, `semantic_similarity_score`, `grammar_error_count`, `spelling_error_count` — all reserved as `None` for future use. The architecture is planned but the pipeline is not built.
+
+---
+
+## Interview Engine
+
+**Status**: Architecturally complete, not wired into the live flow.
+
+What exists:
+- `InterviewContextBuilder` — stub, returns empty context
+- `InterviewPlanner` — complete, generates a 5-phase plan with time allocation
+- `QuestionSelector` — complete, selects questions per objective
+- All runtime domain schemas — `InterviewContext`, `InterviewPlan`, `InterviewPhase`, `InterviewObjective`, `CandidateProfile`, `JobProfile`
+
+What is not connected:
+- The live interview flow (`InterviewService`) does not call `InterviewContextBuilder`, `InterviewPlanner`, or `QuestionSelector`. It calls `InterviewQuestionGeneratorService` directly.
+- There is no follow-up question generation.
+- There is no adaptive difficulty adjustment.
+
+The interview engine represents a more sophisticated, AI-ready interview flow. The simpler generator service is what actually runs. They must be unified in a future sprint.
+
+---
+
+## Question Generation
+
+**Status**: Rule-based only. Functional.
+
+`InterviewQuestionGeneratorService` generates questions by pulling from the question bank based on category distribution and interview duration. This is a deterministic algorithm, not AI generation.
+
+True AI question generation (via LLM, as specified in Sprint 3 of the roadmap) has not been started. `QuestionSource.AI` is defined in enums but no AI-generated questions exist.
+
+---
+
+## Question Bank
+
+**Status**: Modular seed architecture implemented. 6 roles scaffolded with placeholder questions (18 total). All questions carry fully populated `skills`, `technologies`, and `expected_concepts` metadata.
+
+**Seeded roles**:
+- Backend Developer (FRESHER) — **30 production-quality questions** (reference implementation)
+- Python Developer (FRESHER) — 3 placeholder questions
+- AI/ML Engineer (FRESHER) — 3 placeholder questions
+- Data Scientist (FRESHER) — 3 placeholder questions
+- Cloud Engineer (FRESHER) — 3 placeholder questions
+- DevOps Engineer (FRESHER) — 3 placeholder questions
+
+**Backend Developer topic coverage**: Python · OOP · FastAPI · REST APIs · SQL · PostgreSQL · SQLAlchemy · Authentication · JWT · Docker · Git · HTTP · API Design · Error Handling · Performance · Caching · Async Programming · Testing · System Design
+
+**Category distribution (Backend Developer)**: INTRODUCTION ×4 · PROJECT ×5 · TECHNICAL ×13 · ROLE_SPECIFIC ×5 · BEHAVIORAL ×3
+
+**Difficulty distribution (Backend Developer)**: EASY ×10 · MEDIUM ×14 · HARD ×6
+
+**Metadata status**: All seeded questions have non-empty `skills`, `technologies`, and `expected_concepts` arrays. `QuestionBankRepository.find_best_questions()` will now return results for objectives that match these arrays.
+
+**Seed architecture**: The seed script is now an orchestration-only file. Role question data lives in `backend/scripts/question_bank/<role>.py`. The shared `create_question()` factory in `common.py` enforces consistent field population across all roles. Future semantic retrieval (embeddings, pgvector) can consume these metadata fields without schema changes.
+
+---
+
+## Resume/JD Parsing
+
+**Status**: Not started.
+**Architecture**: Designed. `CandidateProfile` and `JobProfile` domain schemas exist. `InterviewContextBuilder` has stub methods for both.
+**Missing**: Resume upload endpoint, file storage, LLM/NLP-based extraction pipeline.
+
+---
+
+## LLM Provider Layer
+
+**Status**: Not started.
+**Architecture**: Defined in ADR-003. Provider abstraction interface described.
+**Missing**: `LLMProvider` abstract interface, Ollama adapter, OpenAI adapter, Gemini adapter, prompt templates, integration with question generation and evaluation services.
+
+---
+
+## Voice / Speech
+
+**Status**: Not started.
+**Architecture**: Whisper integration mentioned in architecture doc (Sprint 5 of roadmap).
+**Missing**: Audio upload endpoint, Whisper integration, transcript storage, streaming support.
+
+---
+
+## Vision Analysis
+
+**Status**: Not started. (Sprint 11 in roadmap)
+
+---
+
+# 8. Feature Progress
+
+```
+Authentication             ████████████████████  90%
+  ├─ Register/Login        ████████████████████ 100%
+  ├─ JWT Auth              ████████████████████ 100%
+  ├─ Email Verification    ░░░░░░░░░░░░░░░░░░░░   0%
+  └─ Refresh Tokens        ░░░░░░░░░░░░░░░░░░░░   0%
+
+Interview Sessions         ████████████████░░░░  80%
+  ├─ Create Session        ████████████████████ 100%
+  ├─ List Sessions         ████████████████████ 100%
+  ├─ Session Detail        ████████████████████ 100%
+  ├─ Start Interview       ████████████████████ 100%
+  ├─ Submit Answer         ████████████████████ 100%
+  ├─ Session Abandonment   ░░░░░░░░░░░░░░░░░░░░   0%
+  └─ Interview Completion  ██████████████░░░░░░  70%
+
+Question Bank              ████████████████░░░░  75%
+  ├─ Schema & Model        ████████████████████ 100%
+  ├─ Repository Logic      ████████████████████ 100%
+  ├─ Seed Architecture     ████████████████████ 100%  ← modular, 6 roles scaffolded
+  ├─ Seed Data (full)      ████░░░░░░░░░░░░░░░░  20%  ← placeholder questions only
+  ├─ AI Metadata Populated ████████████████████ 100%  ← all questions have metadata
+  └─ Admin API             ░░░░░░░░░░░░░░░░░░░░   0%
+
+Interview Engine            ████████░░░░░░░░░░░░  40%
+  ├─ Context Builder       ████░░░░░░░░░░░░░░░░  20%
+  ├─ Interview Planner     ████████████████████  85%
+  ├─ Question Selector     ████████████░░░░░░░░  60%
+  └─ Live Flow Integration ░░░░░░░░░░░░░░░░░░░░   0%
+
+Evaluation Engine          ████░░░░░░░░░░░░░░░░  25%
+  ├─ Text Processor        ████████████████████ 100%
+  ├─ Statistics Extractor  ████████████████████ 100%
+  ├─ Vocabulary Extractor  ████████████████████ 100%
+  ├─ Keyword Extractor     ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Readability Extractor ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Grammar Extractor     ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Semantic Extractor    ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Feature Fusion        ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Scoring Engine        ░░░░░░░░░░░░░░░░░░░░   0%
+  └─ Evaluation API        ░░░░░░░░░░░░░░░░░░░░   0%
+
+LLM Provider Layer         ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Provider Interface    ░░░░░░░░░░░░░░░░░░░░   0%
+  ├─ Ollama Adapter        ░░░░░░░░░░░░░░░░░░░░   0%
+  └─ OpenAI/Gemini         ░░░░░░░░░░░░░░░░░░░░   0%
+
+Resume/JD Parsing          ░░░░░░░░░░░░░░░░░░░░   0%
+
+Voice / Speech (Whisper)   ░░░░░░░░░░░░░░░░░░░░   0%
+
+Analytics / Dashboard      ░░░░░░░░░░░░░░░░░░░░   0%
+
+Frontend                   ░░░░░░░░░░░░░░░░░░░░   0%
+
+Infrastructure / Docker    ████░░░░░░░░░░░░░░░░  20%
+  ├─ Docker Compose (DB)   ████████████████████ 100%
+  ├─ Backend Dockerfile    ░░░░░░░░░░░░░░░░░░░░   0%
+  └─ AWS / Nginx           ░░░░░░░░░░░░░░░░░░░░   0%
+
+Testing                    ████░░░░░░░░░░░░░░░░  15%
+  ├─ Statistics Tests      ████████████████████ 100%
+  ├─ Vocabulary Tests      ██████████░░░░░░░░░░  50% (no assertions)
+  └─ API / Integration     ░░░░░░░░░░░░░░░░░░░░   0%
+
+Overall Project             ███░░░░░░░░░░░░░░░░░  35%
+```
+
+---
+
+# 9. Technical Debt
+
+## Critical Issues
+
+**1. Two parallel interview pipelines coexist without clear ownership**
+`InterviewService` calls `InterviewQuestionGeneratorService` directly. The `InterviewEngine` sub-package (`InterviewContextBuilder` → `InterviewPlanner` → `QuestionSelector`) exists but is never called. These are two separate implementations of the same concern. One must be chosen and the other deprecated or the two must be unified.
+
+**2. Question bank seed data is placeholder-only** *(partially resolved)*
+The seed architecture is now modular and all seeded questions carry full AI metadata. `QuestionBankRepository.find_best_questions()` will return results for matching objectives. However, each role currently has only 3 placeholder questions. Full population (20–30 questions per role, multiple experience levels) is a separate task.
+
+**3. `InterviewAnswerService` duplicates and conflicts with `InterviewService`**
+`InterviewAnswerService.submit_answer` saves an answer but does NOT mark the question as asked and does NOT advance the interview. `InterviewService.submit_answer` does both. The two services implement overlapping but inconsistent semantics. `InterviewAnswerService` is not wired to any endpoint.
+
+**4. No evaluation endpoint exists**
+`InterviewEvaluation` model, schema, repository, and migration are all complete. The feature extractor infrastructure exists. But there is no service, no endpoint, and no pipeline to actually produce an evaluation. The evaluation feature has its schema but no working implementation.
+
+**5. Empty placeholder modules create false impression of completeness**
+`core/logging.py`, `services/evaluation/constants.py`, `services/evaluation/keywords.py`, `services/evaluation/utils.py`, `services/evaluation/knowledge_base/__init__.py`, and `shared/responses.py` are all empty files. They represent future work but may mislead.
+
+---
+
+## Architecture Inconsistencies
+
+**6. API response format does not match the documented contract**
+`api-contract-v1.md` specifies `{ "success": true, "data": {}, "message": "" }`. The actual API returns raw Pydantic model serialisations. `shared/responses.py` was meant to implement this but is empty.
+
+**7. `datetime.utcnow()` deprecated**
+`InterviewService` uses `datetime.utcnow()`. This is deprecated since Python 3.12. Should use `datetime.now(timezone.utc)`.
+
+**8. `echo=True` hardcoded in database engine**
+`db/session.py` has `echo=True`, which will log every SQL statement to stdout. This is appropriate for development but will pollute logs and degrade performance in production.
+
+**9. `resume_id` has no foreign key constraint**
+`InterviewSession.resume_id` is a nullable integer with no FK relationship. It will accept any integer value without constraint. When the Resume table is eventually created, a migration will be needed to add the FK.
+
+**10. Database design document specifies UUID primary keys; implementation uses integers**
+`database-design-v1.md` specifies UUID PKs throughout. The implementation uses auto-increment integers. This is not necessarily wrong but is a divergence from the documented design.
+
+**11. `QuestionSelector` increments `usage_count` in memory without committing**
+`QuestionSelector.select_questions` does `bank_question.usage_count += 1` but there is no subsequent `db.commit()`. Usage counts will not be persisted.
+
+**12. `InterviewQuestionGeneratorService` also increments usage count without atomic commit**
+Same pattern — usage count is mutated before the question list is fully built, relying on the final commit to persist all changes. If an exception occurs mid-loop, partial usage count increments will be lost.
+
+---
+
+## Missing Infrastructure
+
+**13. No CORS middleware**
+The `FastAPI` app has no CORS configuration. When a frontend is built, it will be blocked by the browser.
+
+**14. No global exception handler**
+`main.py` has no exception handlers. Unhandled exceptions will leak Python tracebacks to API consumers. All `ValueError` exceptions in services are mapped to `404` even when `400` or `403` would be more appropriate.
+
+**15. No request/response logging middleware**
+
+**16. No startup event for NLP model warm-up**
+The spaCy and sentence-transformer models are loaded lazily on first use. The first request that triggers them will be slow. A startup event should pre-warm the models.
+
+**17. Backend Dockerfile is empty**
+`infrastructure/docker/backend.Dockerfile` is empty. The backend cannot be containerised.
+
+**18. No CI/CD configuration**
+`.github/workflows/` folder exists but is empty.
+
+**19. No production secrets management**
+`JWT_SECRET_KEY` is set to `"change-me-in-production"` in `.env.example` with no enforcement mechanism.
+
+---
+
+## Missing Tests
+
+**20. No API integration tests**
+No tests for any endpoint. No tests for auth flow, session creation, interview loop.
+
+**21. `test_vocabulary_feature_extractor.py` has no assertions**
+It runs the extractor and prints output but asserts nothing. It's a script, not a test.
+
+**22. No tests for services, repositories, or the interview engine components**
+
+---
+
+## Minor Issues
+
+**23. `print()` used for debug output in `InterviewQuestionGeneratorService`**
+Should use Python `logging` module.
+
+**24. `TextUtils` partially duplicates `TextProcessor`**
+`TextUtils` uses regex-based tokenisation. `TextProcessor` uses spaCy. The relationship and intended use of each is unclear. `TextUtils` appears unused by any other module.
+
+**25. `database.py` in `core/` is a thin re-export wrapper over `db/session.py`**
+`core/database.py` doesn't appear to exist as a file but `db/session.py` fills this role directly. The separation between `core/` and `db/` is slightly inconsistent.
+
+**26. Seed data is placeholder-only across 6 roles**
+The modular seed architecture scaffolds 6 roles but each has only 3 questions. Full population (20–30 questions per role, multiple experience levels) is needed before demo quality is reached.
+
+---
+
+# 10. Recommended Sprint Plan
+
+Based on the current state of the repository, the following sprints are recommended. Each sprint builds on the previous. Sprints assume a solo or 2-person team working part-time.
+
+---
+
+## Sprint A — Foundation Hardening
+**Goal**: Fix the critical technical debt that blocks all future progress.
+**Effort**: 2-3 days
+
+**Deliverables**:
+- Replace `datetime.utcnow()` with `datetime.now(timezone.utc)` throughout
+- Set `echo=True` to be config-driven (`DEBUG` flag in Settings)
+- Implement `shared/responses.py` — standardised API response envelope
+- Implement `core/logging.py` — structured logging with request IDs
+- Add CORS middleware to `main.py`
+- Add global exception handler to `main.py`
+- Replace `ValueError` raises in services with proper custom exceptions from `shared/exceptions.py`
+- Add proper `POST /interviews/{id}/abandon` endpoint
+- Add FastAPI startup event to pre-warm spaCy and embedding models
+
+**Dependencies**: None. These are all independent fixes.
+**Risk**: Low.
+
+---
+
+## Sprint B — Unify the Interview Engine
+**Goal**: Replace the parallel pipeline architecture with a single unified interview flow.
+**Effort**: 3-4 days
+
+**Deliverables**:
+- Wire `InterviewContextBuilder` → `InterviewPlanner` → `QuestionSelector` into `InterviewService.start_interview`
+- Deprecate `InterviewQuestionGeneratorService` or reduce it to a fallback
+- Populate AI metadata (`skills`, `technologies`, `expected_concepts`) — **done via modular seed architecture**
+- Expand seed data to 20–30 questions per role across FRESHER and MID experience levels (placeholder structure is in place)
+- Fix `QuestionSelector` to commit usage count increments atomically
+- Verify the full interview loop works end-to-end with the unified pipeline
+
+**Dependencies**: Sprint A (exception handling, logging).
+**Risk**: Medium — requires careful testing of the interview flow.
+
+---
+
+## Sprint C — Evaluation Engine MVP
+**Goal**: Produce a real evaluation score for a completed interview session.
+**Effort**: 4-5 days
+
+**Deliverables**:
+- Implement `services/evaluation/keywords.py` — technical and behavioural keyword dictionaries
+- Implement `services/evaluation/constants.py` — scoring thresholds and weights
+- Implement `KeywordFeatureExtractor` and `ReadabilityFeatureExtractor` (using `textstat`)
+- Implement feature fusion service — combines all extractors into `TextFeatureVector`
+- Implement rule-based scoring engine — maps `TextFeatureVector` to `technical_score`, `communication_score`, `behavioral_score`, `confidence_score`, `overall_score`
+- Implement `POST /interviews/{id}/evaluate` endpoint
+- Implement `GET /interviews/{id}/evaluation` endpoint
+- Wire evaluation trigger on interview completion (or on-demand via endpoint)
+- Add integration test for the evaluation pipeline
+
+**Dependencies**: Sprint A, Sprint B.
+**Risk**: Medium. Scoring rules will be arbitrary at this stage — they can be refined later.
+
+---
+
+## Sprint D — Backend Dockerfile and CI
+**Goal**: Make the backend fully deployable and add basic CI.
+**Effort**: 2 days
+
+**Deliverables**:
+- Complete `infrastructure/docker/backend.Dockerfile`
+- Add backend service to `docker-compose.yml`
+- Create `.github/workflows/ci.yml` with: lint (ruff), type check (mypy), run pytest
+- Add pytest configuration to `pyproject.toml`
+- Expand test coverage to auth endpoints and interview session flow
+
+**Dependencies**: Sprint A.
+**Risk**: Low.
+
+---
+
+## Sprint E — LLM Provider Layer
+**Goal**: Implement AI-powered question generation and feedback.
+**Effort**: 5-7 days
+
+**Deliverables**:
+- Design and implement `LLMProvider` abstract interface (`generate_question`, `evaluate_answer`, `generate_feedback`)
+- Implement Gemini adapter (free tier, no cost for demo)
+- Integrate LLM-generated feedback into `InterviewEvaluation.strengths`, `weaknesses`, `recommendations`
+- Add LLM-based follow-up question generation after each primary answer
+- Add `QuestionSource.AI` questions to the question bank via LLM seeding script
+- Abstract provider selection via `settings.LLM_PROVIDER`
+
+**Dependencies**: Sprint C.
+**Risk**: Medium-High. LLM latency and cost management needed.
+
+---
+
+## Sprint F — Frontend MVP
+**Goal**: Build a minimal working web UI for recruiter demos.
+**Effort**: 7-10 days
+
+**Deliverables**:
+- React + TypeScript + TailwindCSS setup
+- Auth pages (Register, Login)
+- Dashboard (list interview sessions, start new session)
+- Interview room (question display, text answer input, next question flow)
+- Results page (evaluation scores, strengths, recommendations)
+
+**Dependencies**: Sprints A-D (stable API). Sprint C (evaluation data to display).
+**Risk**: High if solo — significant scope.
+
+---
+
+## Sprint G — AWS Deployment
+**Goal**: Deploy to AWS and make the project publicly accessible.
+**Effort**: 3-4 days
+
+**Deliverables**:
+- Deploy backend to EC2
+- Deploy PostgreSQL to RDS
+- Configure environment variables via AWS Parameter Store
+- Configure HTTPS via ALB or nginx
+- Set up S3 for future file storage (resume uploads)
+- Configure CloudWatch for logs
+- Update CI/CD to deploy on merge to main
+
+**Dependencies**: Sprint D (Dockerfile), Sprint F (Frontend) if deploying full-stack.
+**Risk**: Medium. AWS cost management required.
+
+---
+
+# 11. Production Readiness
+
+| Dimension | Score | Notes |
+|---|---|---|
+| Architecture Quality | 72/100 | Clean layered architecture, good separation of concerns. Significant inconsistency between the interview engine sub-package and the live code path. |
+| Maintainability | 65/100 | Code is well-structured and documented. Empty placeholder files, duplicate services, and bypassed modules reduce confidence. |
+| Scalability | 55/100 | Modular monolith is appropriate for current scale. Missing database indexes on foreign key columns. NLP model loading is lazy. No caching layer. |
+| Security | 60/100 | JWT auth is correctly implemented. bcrypt hashing is correct. No CORS, no rate limiting, no input sanitisation beyond Pydantic, no refresh tokens, no token revocation. |
+| AI Readiness | 45/100 | Infrastructure is thoughtful — singleton managers, domain schemas, feature vectors. But the pipeline is ~25% complete. LLM layer is 0%. Embedding model loads but has no consumer. |
+| Deployment Readiness | 15/100 | Dockerfile is empty. No CI/CD. Docker Compose only runs the database. No production secrets management. |
+| Testing Readiness | 15/100 | 2 unit tests exist (one without assertions). No API tests, no service tests, no integration tests. No test configuration. |
+
+**Overall Production Readiness: 47/100**
+
+The codebase demonstrates strong architectural thinking and clean implementation in the areas that are built. The gap is completion — many systems exist as skeletons and the deployment layer is essentially absent.
+
+---
+
+# 12. Recruiter Demo Readiness
+
+**Current answer: No. Not demo-ready.**
+
+A recruiter or hiring manager cannot currently experience SpeakLift as a product. There is no frontend, no UI, no voice interaction, and no evaluation output to show.
+
+However, the backend API is functional and can be demoed via Swagger UI (`/docs`) or Postman, which demonstrates architectural sophistication to a technical interviewer.
+
+## Minimum Requirements Before Resume-Worthy
+
+The following are the minimum features needed before this project can be meaningfully shown on a CV or in an interview:
+
+1. **Working evaluation output** — A completed interview must produce an evaluation with scores and feedback. Without this, the "AI" aspect of the platform cannot be demonstrated.
+
+2. **Deployed, public URL** — The backend must be deployed somewhere accessible. A running EC2 instance or a Railway/Render deployment is sufficient. "It runs locally" is not demo-worthy.
+
+3. **Basic frontend OR polished API documentation** — Either a minimal React UI that shows the interview flow, or a thoroughly documented Postman collection / OpenAPI spec that a recruiter can follow.
+
+4. **At least one more role seeded** — The question bank only covers `Backend Developer/FRESHER`. A demo covering 2-3 roles demonstrates the platform's generalisability.
+
+5. **Dockerfile working** — The project must be containerisable to claim "production-grade" architecture.
+
+## What is already impressive (for technical reviewers)
+
+- The layered architecture (API → Service → Repository → Model) is clean and correct
+- Alembic migrations are properly managed with a 4-step history
+- The domain schema design (InterviewContext, InterviewPlan, CandidateProfile) is sophisticated
+- The evaluation feature vector schema is well-designed and ML-ready
+- The question bank AI metadata design anticipates vector search
+- Pydantic v2 schemas are correctly used throughout
+- JWT auth is properly implemented with bcrypt
+- Repository pattern with ownership enforcement is production-correct
+
+With Sprint A through Sprint C completed and deployed, this project would be strong enough for placement interviews at a mid-to-senior backend role level.
+
+---
+
+# 13. Next Recommended Task
+
+## Populate the Question Bank AI Metadata
+
+**Specifically**: Update `backend/scripts/seed_question_bank.py` to populate `skills`, `technologies`, and `expected_concepts` fields for all 30 existing questions.
+
+**Why this is the highest priority task:**
+
+1. **It unblocks the Interview Engine pipeline.** The `QuestionBankRepository.find_best_questions()` method — the most intelligent query in the codebase — matches questions against objectives using these arrays. Without populated metadata, it always returns 0 results, making the `InterviewPlanner` and `QuestionSelector` non-functional.
+
+2. **It unblocks Sprint B (Unify the Interview Engine).** Wiring `InterviewContextBuilder → InterviewPlanner → QuestionSelector` into the live interview flow requires the question bank to have metadata to match against. Doing this without populated data would produce empty question sets.
+
+3. **It requires zero new code.** Only the seed script needs to change. No model changes, no migration, no API changes. It is a pure data quality fix.
+
+4. **It validates the end-to-end AI metadata pipeline.** Once metadata is populated, you can verify that `find_best_questions` returns correct questions for a given objective. This is the first step toward demonstrating that the interview engine produces contextually relevant questions — the core AI value proposition.
+
+5. **Every subsequent feature depends on a populated question bank.** Evaluation, LLM follow-up generation, resume-based personalisation, difficulty adjustment — all of these assume that questions have metadata. Fixing this now means all future sprints build on a solid foundation.
+
+**Estimated effort**: 2-4 hours to update the seed script with meaningful metadata, re-seed the database, and verify `find_best_questions` returns correct results.
+
+---
+
+*End of SpeakLift Project Status Document — July 1, 2026*

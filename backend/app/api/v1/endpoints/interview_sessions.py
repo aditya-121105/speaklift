@@ -1,8 +1,4 @@
-from fastapi import (
-    APIRouter,
-    Depends,
-    HTTPException,
-)
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 from app.dependencies.auth import (
@@ -97,23 +93,11 @@ def get_interview_session(
         get_current_user
     ),
 ):
-
-    interview_session = (
-        InterviewSessionService
-        .get_interview_session(
-            db,
-            interview_session_id,
-            current_user.id,
-        )
+    return InterviewSessionService.get_interview_session(
+        db,
+        interview_session_id,
+        current_user.id,
     )
-
-    if not interview_session:
-        raise HTTPException(
-            status_code=404,
-            detail="Interview session not found",
-        )
-
-    return interview_session
 
 @router.post(
     "/{interview_session_id}/start",
@@ -126,27 +110,11 @@ def start_interview(
         get_current_user
     ),
 ):
-
-    try:
-
-        question = (
-            InterviewService.start_interview(
-                db=db,
-                session_id=(
-                    interview_session_id
-                ),
-                user_id=current_user.id,
-            )
-        )
-
-        return question
-
-    except ValueError as exc:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        )
+    return InterviewService.start_interview(
+        db=db,
+        session_id=interview_session_id,
+        user_id=current_user.id,
+    )
 
 @router.post(
     "/{interview_session_id}/answer",
@@ -160,34 +128,17 @@ def submit_answer(
         get_current_user
     ),
 ):
-    try:
+    next_question = InterviewService.submit_answer(
+        db=db,
+        session_id=interview_session_id,
+        user_id=current_user.id,
+        question_id=payload.question_id,
+        transcript=payload.transcript,
+        answer_source=payload.answer_source,
+        answer_duration_seconds=payload.answer_duration_seconds,
+    )
 
-        next_question = (
-            InterviewService.submit_answer(
-                db=db,
-                session_id=(
-                    interview_session_id
-                ),
-                user_id=current_user.id,
-                question_id=payload.question_id,
-                transcript=payload.transcript,
-                answer_source=(
-                    payload.answer_source
-                ),
-                answer_duration_seconds=(
-                    payload.answer_duration_seconds
-                ),
-            )
-        )
-
-    except ValueError as exc:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        )
     if next_question:
-
         return {
             "interview_completed": False,
             "next_question": next_question,
@@ -211,23 +162,11 @@ def get_questions(
         get_current_user
     ),
 ):
-
-    try:
-
-        return (
-            InterviewService.get_questions(
-                db=db,
-                session_id=interview_session_id,
-                user_id=current_user.id,
-            )
-        )
-
-    except ValueError as exc:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        )
+    return InterviewService.get_questions(
+        db=db,
+        session_id=interview_session_id,
+        user_id=current_user.id,
+    )
 
 @router.get(
     "/{interview_session_id}/answers",
@@ -242,20 +181,8 @@ def get_answers(
         get_current_user
     ),
 ):
-
-    try:
-
-        return (
-            InterviewService.get_answers(
-                db=db,
-                session_id=interview_session_id,
-                user_id=current_user.id,
-            )
-        )
-
-    except ValueError as exc:
-
-        raise HTTPException(
-            status_code=404,
-            detail=str(exc),
-        )
+    return InterviewService.get_answers(
+        db=db,
+        session_id=interview_session_id,
+        user_id=current_user.id,
+    )

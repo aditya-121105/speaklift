@@ -18,6 +18,11 @@ from app.repositories.interview_session_repository import (
 from app.schemas.interview_answer import (
     SubmitAnswerRequest,
 )
+from app.shared.exceptions import (
+    InterviewSessionNotFoundError,
+    InterviewQuestionNotFoundError,
+    InvalidSessionStateError,
+)
 
 
 class InterviewAnswerService:
@@ -39,7 +44,7 @@ class InterviewAnswerService:
         )
 
         if not session:
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found"
             )
 
@@ -51,7 +56,7 @@ class InterviewAnswerService:
         )
 
         if not question:
-            raise ValueError(
+            raise InterviewQuestionNotFoundError(
                 "Question not found"
             )
 
@@ -59,7 +64,7 @@ class InterviewAnswerService:
             question.interview_session_id
             != interview_session_id
         ):
-            raise ValueError(
+            raise InvalidSessionStateError(
                 "Question does not belong to interview session"
             )
 
@@ -94,7 +99,7 @@ class InterviewAnswerService:
         )
 
         if not session:
-            raise ValueError(
+            raise InterviewSessionNotFoundError(
                 "Interview session not found"
             )
 

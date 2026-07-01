@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.dependencies.auth import get_current_user
 from app.models.user import User
@@ -11,7 +11,6 @@ from app.schemas.auth import (
     CurrentUserResponse,
     TokenResponse,
 )
-from app.shared.exceptions import UserAlreadyExistsError, InvalidCredentialsError
 from app.services.auth_service import AuthService
 
 router = APIRouter(
@@ -25,23 +24,15 @@ def register(
     payload: RegisterRequest,
     db: Session = Depends(get_db),
 ):
-    try:
-        user = AuthService.register_user(
-            db,
-            payload,
-        )
+    user = AuthService.register_user(
+        db,
+        payload,
+    )
 
-        return {
-            "message": "User registered successfully",
-            "user_id": user.id,
-        }
-
-
-    except UserAlreadyExistsError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        )
+    return {
+        "message": "User registered successfully",
+        "user_id": user.id,
+    }
 
 @router.post(
     "/login",
@@ -51,18 +42,10 @@ def login(
     payload: LoginRequest,
     db: Session = Depends(get_db),
 ):
-    try:
-        return AuthService.login_user(
-            db,
-            payload,
-        )
-
-
-    except InvalidCredentialsError as exc:
-        raise HTTPException(
-            status_code=401,
-            detail=str(exc),
-        )
+    return AuthService.login_user(
+        db,
+        payload,
+    )
 
 @router.get("/me", response_model=CurrentUserResponse)
 def get_me(

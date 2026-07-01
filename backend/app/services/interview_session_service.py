@@ -13,6 +13,7 @@ from app.schemas.interview_session import (
 from app.shared.enums import (
     InterviewStatus,
 )
+from app.shared.exceptions import InterviewSessionNotFoundError
 
 
 class InterviewSessionService:
@@ -46,15 +47,22 @@ class InterviewSessionService:
         db: Session,
         interview_session_id: int,
         user_id: int,
-    ) -> InterviewSession | None:
+    ) -> InterviewSession:
 
-        return (
+        interview_session = (
             InterviewSessionRepository.get_by_id_and_user(
                 db,
                 interview_session_id,
                 user_id,
             )
         )
+
+        if not interview_session:
+            raise InterviewSessionNotFoundError(
+                "Interview session not found"
+            )
+
+        return interview_session
 
     @staticmethod
     def get_user_interview_sessions(
