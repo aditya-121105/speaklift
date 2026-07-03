@@ -38,6 +38,27 @@ class DifficultyLevel(str, Enum):
 class QuestionSource(str, Enum):
     AI = "AI"
     MANUAL = "MANUAL"
+
+
+class StorageProvider(str, Enum):
+    LOCAL = "LOCAL"
+    S3 = "S3"
+    AZURE = "AZURE"
+    GCS = "GCS"
+
+
+class UploadStatus(str, Enum):
+    PENDING = "PENDING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+
+class ParsingStatus(str, Enum):
+    PENDING = "PENDING"
+    PROCESSING = "PROCESSING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    SKIPPED = "SKIPPED"
 class AnswerSource(str, Enum):
     TEXT = "TEXT"
     VOICE = "VOICE"

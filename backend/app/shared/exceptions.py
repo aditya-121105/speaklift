@@ -80,3 +80,28 @@ class EvaluationError(SpeakLiftException):
     """Raised when evaluation fails."""
     status_code = 500
     detail = "Evaluation error"
+
+
+# ---------------------------------------------------------------------------
+# Resume domain exceptions
+# ---------------------------------------------------------------------------
+
+class ResumeNotFoundError(NotFoundError):
+    """Raised when a resume record does not exist or does not belong to the user."""
+    detail = "Resume not found"
+
+
+class ResumeUploadError(SpeakLiftException):
+    """Raised when the file cannot be persisted to storage."""
+    status_code = 500
+    detail = "Resume upload failed"
+
+
+class FileTooLargeError(ValidationError):
+    """Raised when an uploaded file exceeds the configured size limit."""
+    detail = "File size exceeds the maximum allowed limit"
+
+
+class InvalidFileTypeError(ValidationError):
+    """Raised when the uploaded file type is not accepted."""
+    detail = "File type not supported. Accepted: PDF, DOCX"
