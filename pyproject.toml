@@ -15,6 +15,7 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "pydantic-settings>=2.14.1",
     "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.32",
     "sentence-transformers>=5.6.0",
     "spacy>=3.8.14",
     "sqlalchemy>=2.0.51",
@@ -26,3 +27,8 @@ dependencies = [
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.pytest.ini_options]
+# Add backend/ to sys.path so that `import app.*` resolves correctly.
+pythonpath = ["backend"]
+testpaths = ["backend/tests"]
