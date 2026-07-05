@@ -1,0 +1,7 @@
+{
+  "\\bnodejs\\b": "node.js",
+  "\\breactjs\\b": "react",
+  "\\bvuejs\\b": "vue.js",
+  "\\bpostgres\\b": "postgresql",
+  "\\bgolang\\b": "go"
+}

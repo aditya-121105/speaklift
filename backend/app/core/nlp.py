@@ -57,28 +57,18 @@ This pattern is common in production AI systems.
 ==============================================================================
 """
 
-import spacy
+# Deprecation shim: redirect to the new NLP architecture
+from app.ai.nlp.resources.spacy_resource import SpacyResourceManager
 
 
 class NLPResourceManager:
-
     """
-    Singleton-style manager responsible for
-    loading NLP resources only once.
+    Adapter to maintain backward compatibility for the evaluation pipeline
+    while it transitions to the new NLP architecture.
     """
-
-    _spacy_model = None
-
     @classmethod
     def get_spacy_model(cls):
         """
-        Return the shared spaCy model.
+        Legacy method signature. Delegates to the new resource manager.
         """
-
-        if cls._spacy_model is None:
-
-            cls._spacy_model = spacy.load(
-                "en_core_web_sm"
-            )
-
-        return cls._spacy_model
+        return SpacyResourceManager.get_model()

@@ -1,0 +1,11 @@
+[
+  "PostgreSQL",
+  "MySQL",
+  "MongoDB",
+  "Redis",
+  "Elasticsearch",
+  "Cassandra",
+  "Oracle",
+  "SQL Server",
+  "DynamoDB"
+]
