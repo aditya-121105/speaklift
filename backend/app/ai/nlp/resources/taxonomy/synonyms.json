@@ -1,7 +1,8 @@
 {
-  "\\bnodejs\\b": "node.js",
-  "\\breactjs\\b": "react",
-  "\\bvuejs\\b": "vue.js",
-  "\\bpostgres\\b": "postgresql",
-  "\\bgolang\\b": "go"
+  "\\bnodejs\\b": "Node.js",
+  "\\breactjs\\b": "React",
+  "\\bvuejs\\b": "Vue.js",
+  "\\bpostgres\\b": "PostgreSQL",
+  "\\bgolang\\b": "Go",
+  "\\btensor\\s+flow\\b": "TensorFlow"
 }
