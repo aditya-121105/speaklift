@@ -14,11 +14,15 @@ Sprint C.4.3 — ContactExtractor and SkillExtractor implemented.
 from .base import EntityExtractor, ExtractorRegistry
 from .contact_extractor import ContactExtractor
 from .skill_extractor import SkillExtractor
+from .education_extractor import EducationExtractor
+from .experience_extractor import ExperienceExtractor
 
 __all__ = [
     "EntityExtractor",
     "ExtractorRegistry",
     "ContactExtractor",
     "SkillExtractor",
+    "EducationExtractor",
+    "ExperienceExtractor",
 ]
 

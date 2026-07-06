@@ -5,6 +5,7 @@ from typing import Any
 from app.ai.nlp.extractors.base import EntityExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.skill_schema import SkillSet, SkillEntry
+from app.ai.nlp.resources.taxonomy_resource import TaxonomyResourceManager
 
 
 class SkillExtractor(EntityExtractor):
@@ -13,45 +14,13 @@ class SkillExtractor(EntityExtractor):
     """
 
     def __init__(self, taxonomy_dir: Path | None = None) -> None:
-        if taxonomy_dir is None:
-            current_dir = Path(__file__).parent
-            taxonomy_dir = current_dir.parent / "resources" / "taxonomy"
-
-        self._taxonomy_dir = taxonomy_dir
-        self._load_taxonomy()
+        self._taxonomy = TaxonomyResourceManager.get_taxonomy(taxonomy_dir)
+        self._synonyms = TaxonomyResourceManager.get_synonyms(taxonomy_dir)
+        self._technology_categories = TaxonomyResourceManager.get_technology_categories()
 
     @property
     def domain(self) -> str:
         return "skills"
-
-    def _load_taxonomy(self) -> None:
-        self._taxonomy = {}  # maps lowercase_name -> (normalized_name, category)
-        self._synonyms = {}  # maps pattern_str -> normalized_name
-        self._technology_categories = {
-            "databases", "cloud", "devops", "tools", "operating_systems"
-        }
-
-        # 1. Load taxonomy JSONs
-        for path in self._taxonomy_dir.glob("*.json"):
-            if path.name == "synonyms.json":
-                continue
-            category = path.stem
-            try:
-                with open(path, "r", encoding="utf-8") as f:
-                    skills_list = json.load(f)
-                    for skill in skills_list:
-                        self._taxonomy[skill.lower()] = (skill, category)
-            except Exception:
-                pass
-
-        # 2. Load synonyms JSON
-        synonyms_path = self._taxonomy_dir / "synonyms.json"
-        if synonyms_path.exists():
-            try:
-                with open(synonyms_path, "r", encoding="utf-8") as f:
-                    self._synonyms = json.load(f)
-            except Exception:
-                pass
 
     def extract(self, context: ProcessingContext) -> SkillSet:
         # Generate skill candidates from spaCy output
