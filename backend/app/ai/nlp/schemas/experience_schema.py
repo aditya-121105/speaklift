@@ -7,10 +7,14 @@ class ExperienceRecord(BaseModel):
 
     job_title: str | None
     company: str | None
+    employment_type: str | None = None
+    location: str | None = None
     start_date: str | None
     end_date: str | None
-    is_current: bool
-    duration_months: int | None
-    technologies_used: list[str]  # populated with normalized_names
+    is_current: bool = False
+    duration_months: int | None = None
+    description: str | None = None
+    technologies_used: list[str] = []  # populated with normalized_names
+    confidence: float = 1.0
     raw_text: str
     normalized_name: str | None = None
