@@ -158,6 +158,38 @@ _HEADING_PATTERNS: tuple[_HeadingPattern, ...] = (
         SectionType.REFERENCES,
         re.compile(r"^references?\s*:?\s*$", re.I),
     ),
+    # -- JD: Requirements -----------------------------------------------------
+    _HeadingPattern(
+        SectionType.REQUIREMENTS,
+        re.compile(
+            r"^(what\s+you( wi)?ll\s+need|requirements?|qualifications?|who\s+you\s+are|what\s+we(\s+a|')?re\s+looking\s+for)\s*:?\s*$",
+            re.I,
+        ),
+    ),
+    # -- JD: Responsibilities -------------------------------------------------
+    _HeadingPattern(
+        SectionType.RESPONSIBILITIES,
+        re.compile(
+            r"^(what\s+you( wi)?ll\s+do|responsibilities|your\s+role|duties|what\s+you( wi)?ll\s+be\s+doing)\s*:?\s*$",
+            re.I,
+        ),
+    ),
+    # -- JD: Benefits ---------------------------------------------------------
+    _HeadingPattern(
+        SectionType.BENEFITS,
+        re.compile(
+            r"^(perks?|benefits?|what\s+we\s+offer|why\s+join\s+us|compensation(\s+and\s+benefits)?)\s*:?\s*$",
+            re.I,
+        ),
+    ),
+    # -- JD: Company Overview -------------------------------------------------
+    _HeadingPattern(
+        SectionType.COMPANY_OVERVIEW,
+        re.compile(
+            r"^(about\s+(us|the\s+company)|company\s+(overview|profile)|who\s+we\s+are)\s*:?\s*$",
+            re.I,
+        ),
+    ),
 )
 
 

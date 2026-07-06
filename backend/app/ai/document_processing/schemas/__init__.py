@@ -43,6 +43,10 @@ class SectionType(str, Enum):
     INTERESTS = "interests"
     REFERENCES = "references"
     CONTACT = "contact"
+    REQUIREMENTS = "requirements"
+    RESPONSIBILITIES = "responsibilities"
+    BENEFITS = "benefits"
+    COMPANY_OVERVIEW = "company_overview"
     OTHER = "other"
 
 

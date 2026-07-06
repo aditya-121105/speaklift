@@ -32,6 +32,7 @@ Interview Context Builder
 import logging
 import uuid
 from pathlib import PurePosixPath
+from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session
 
@@ -210,6 +211,7 @@ class ResumeService:
             # Profile persistence is out of scope for this sprint.
             
             resume.parsing_status = ParsingStatus.COMPLETED
+            resume.parsed_at = datetime.now(timezone.utc)
             db.commit()
             logger.info(f"Successfully processed resume {resume.id}")
             

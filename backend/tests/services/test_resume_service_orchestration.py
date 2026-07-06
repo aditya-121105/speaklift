@@ -79,6 +79,7 @@ def test_upload_resume_successful_orchestration(
 
     assert resume.parsing_status == ParsingStatus.COMPLETED
     assert resume.upload_status == UploadStatus.COMPLETED
+    assert getattr(resume, "parsed_at", None) is not None
 
     mock_document_extractor.extract.assert_called_once()
     mock_nlp_pipeline.run.assert_called_once()
@@ -115,6 +116,7 @@ def test_upload_resume_extraction_failure(
     )
 
     assert resume.parsing_status == ParsingStatus.FAILED
+    assert getattr(resume, "parsed_at", None) is None
     mock_document_extractor.extract.assert_called_once()
     mock_nlp_pipeline.run.assert_not_called()
     mock_db.commit.assert_called()
@@ -148,6 +150,7 @@ def test_upload_resume_nlp_failure(
     )
 
     assert resume.parsing_status == ParsingStatus.FAILED
+    assert getattr(resume, "parsed_at", None) is None
     mock_document_extractor.extract.assert_called_once()
     mock_nlp_pipeline.run.assert_called_once()
     mock_entity_validator.validate_entities.assert_not_called()
@@ -182,6 +185,7 @@ def test_upload_resume_validator_failure(
     )
 
     assert resume.parsing_status == ParsingStatus.FAILED
+    assert getattr(resume, "parsed_at", None) is None
     mock_document_extractor.extract.assert_called_once()
     mock_nlp_pipeline.run.assert_called_once()
     mock_entity_validator.validate_entities.assert_called_once()
@@ -217,5 +221,6 @@ def test_upload_resume_builder_failure(
     )
 
     assert resume.parsing_status == ParsingStatus.FAILED
+    assert getattr(resume, "parsed_at", None) is None
     mock_profile_builder.build.assert_called_once()
     mock_db.commit.assert_called()
