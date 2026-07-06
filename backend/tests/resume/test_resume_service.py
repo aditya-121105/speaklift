@@ -91,6 +91,10 @@ class TestUploadResumeHappyPath:
             content_type="application/pdf",
             file_data=file_data,
             storage=storage,
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
         )
 
         # File was saved to storage
@@ -124,6 +128,10 @@ class TestUploadResumeHappyPath:
             content_type=docx_mime,
             file_data=b"PK fake docx content",
             storage=storage,
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
         )
 
         storage.save.assert_called_once()
@@ -153,6 +161,10 @@ class TestUploadResumeHappyPath:
             content_type="application/pdf",
             file_data=b"x" * 512,
             storage=storage,
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
         )
 
         assert captured_resume is not None
@@ -162,7 +174,7 @@ class TestUploadResumeHappyPath:
         assert captured_resume.file_extension == ".pdf"
         assert captured_resume.file_size_bytes == 512
         assert captured_resume.upload_status == UploadStatus.COMPLETED
-        assert captured_resume.parsing_status == ParsingStatus.PENDING
+        assert captured_resume.parsing_status == ParsingStatus.COMPLETED
         assert captured_resume.storage_provider == StorageProvider.LOCAL
         assert captured_resume.storage_path.startswith("resumes/7/")
         assert captured_resume.storage_path.endswith(".pdf")
@@ -184,6 +196,10 @@ class TestUploadResumeValidation:
                 content_type="application/octet-stream",
                 file_data=b"MZ evil",
                 storage=_mock_storage(),
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
             )
 
     def test_text_plain_raises_invalid_file_type(self) -> None:
@@ -196,6 +212,10 @@ class TestUploadResumeValidation:
                 content_type="text/plain",
                 file_data=b"some text",
                 storage=_mock_storage(),
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
             )
 
     def test_empty_content_type_raises_invalid_file_type(self) -> None:
@@ -208,6 +228,10 @@ class TestUploadResumeValidation:
                 content_type=None,
                 file_data=b"%PDF content",
                 storage=_mock_storage(),
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
             )
 
     @patch("app.services.resume_service.settings")
@@ -226,6 +250,10 @@ class TestUploadResumeValidation:
                 content_type="application/pdf",
                 file_data=b"x" * (2 * 1024 * 1024),  # 2 MB
                 storage=_mock_storage(),
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
             )
 
     def test_empty_file_raises_invalid_file_type(self) -> None:
@@ -238,6 +266,10 @@ class TestUploadResumeValidation:
                 content_type="application/pdf",
                 file_data=b"",
                 storage=_mock_storage(),
+            document_extractor=MagicMock(),
+            nlp_pipeline=MagicMock(),
+            entity_validator=MagicMock(),
+            profile_builder=MagicMock(),
             )
 
     def test_storage_failure_raises_resume_upload_error(self) -> None:
@@ -253,6 +285,10 @@ class TestUploadResumeValidation:
                 content_type="application/pdf",
                 file_data=b"content",
                 storage=storage,
+                document_extractor=MagicMock(),
+                nlp_pipeline=MagicMock(),
+                entity_validator=MagicMock(),
+                profile_builder=MagicMock(),
             )
 
 

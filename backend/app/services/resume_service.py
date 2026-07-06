@@ -47,6 +47,11 @@ from app.shared.exceptions import (
     ResumeUploadError,
 )
 
+from app.ai.document_processing.services import DocumentExtractionService
+from app.ai.nlp.pipeline import NLPPipeline
+from app.ai.nlp.validators.entity_validator import EntityValidator
+from app.services.candidate_profile.builder import CandidateProfileBuilder
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -85,6 +90,10 @@ class ResumeService:
         content_type: str | None,
         file_data: bytes,
         storage: StorageBackend,
+        document_extractor: DocumentExtractionService,
+        nlp_pipeline: NLPPipeline,
+        entity_validator: EntityValidator,
+        profile_builder: CandidateProfileBuilder,
     ) -> Resume:
         """
         Validate, store, and register a resume file.
@@ -184,10 +193,32 @@ class ResumeService:
             storage_provider=_storage_provider_from_settings(),
             storage_path=storage_path,
             upload_status=UploadStatus.COMPLETED,
-            parsing_status=ParsingStatus.PENDING,
+            parsing_status=ParsingStatus.PROCESSING,
         )
 
-        return ResumeRepository.create(db, resume)
+        resume = ResumeRepository.create(db, resume)
+
+        # ------------------------------------------------------------------
+        # 7. Orchestrate AI Pipeline
+        # ------------------------------------------------------------------
+        try:
+            doc_content = document_extractor.extract(file_data, resume.original_filename, mime)
+            extracted_entities = nlp_pipeline.run(doc_content)
+            validated_entities = entity_validator.validate_entities(extracted_entities)
+            candidate_profile = profile_builder.build(validated_entities)
+            
+            # Profile persistence is out of scope for this sprint.
+            
+            resume.parsing_status = ParsingStatus.COMPLETED
+            db.commit()
+            logger.info(f"Successfully processed resume {resume.id}")
+            
+        except Exception as exc:
+            logger.exception(f"Pipeline orchestration failed for resume {resume.id}: {exc}")
+            resume.parsing_status = ParsingStatus.FAILED
+            db.commit()
+
+        return resume
 
     @staticmethod
     def get_resume(

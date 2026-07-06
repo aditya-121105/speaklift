@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Resume Parsing Integration (Sprint C4.8)
+
+---
+
+## [0.4.7] - 2026-07-06
+
+### Added
+
+- CandidateProfile business layer
+- CandidateProfileBuilder
+- Immutable CandidateProfile schemas
+- IdentityProfile
+- CareerProfile
+- EducationProfile
+- TechnologyProfile
+- ProfileMetadata
+- CandidateProfile unit tests
+
+### Changed
+
+- NLP pipeline now hands off to the business layer through CandidateProfileBuilder.
+
+### Fixed
+
+- Removed regex parsing from CandidateProfileBuilder to preserve business-layer boundaries.
+
+---
+
+## [0.4.6] - 2026-07-06
+
+### Added
+
+- Validator base class
+- EntityValidator
+- DuplicateValidator
+- ChronologyValidator
+- ConfidenceValidator
+- URLValidator
+- Validator unit tests
+
+### Changed
+
+- NLP pipeline now includes deterministic validation stage.
+
+### Fixed
+
+- Duplicate entity handling.
+- Invalid chronology handling.
+- Confidence normalization.
+- URL validation.
+
 ---
 
 ## [0.4.5] - 2026-07-06

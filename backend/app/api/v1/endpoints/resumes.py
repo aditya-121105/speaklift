@@ -28,6 +28,17 @@ from app.models.user import User
 from app.schemas.resume import ResumeListResponse, ResumeResponse
 from app.services.resume_service import ResumeService
 
+from app.dependencies.ai import (
+    get_document_extractor,
+    get_nlp_pipeline,
+    get_entity_validator,
+    get_profile_builder,
+)
+from app.ai.document_processing.services import DocumentExtractionService
+from app.ai.nlp.pipeline import NLPPipeline
+from app.ai.nlp.validators.entity_validator import EntityValidator
+from app.services.candidate_profile.builder import CandidateProfileBuilder
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(
@@ -52,6 +63,10 @@ async def upload_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
+    document_extractor: DocumentExtractionService = Depends(get_document_extractor),
+    nlp_pipeline: NLPPipeline = Depends(get_nlp_pipeline),
+    entity_validator: EntityValidator = Depends(get_entity_validator),
+    profile_builder: CandidateProfileBuilder = Depends(get_profile_builder),
 ) -> ResumeResponse:
     # Read file bytes here (async). The synchronous service receives raw bytes.
     file_data = await file.read()
@@ -63,6 +78,10 @@ async def upload_resume(
         content_type=file.content_type,
         file_data=file_data,
         storage=storage,
+        document_extractor=document_extractor,
+        nlp_pipeline=nlp_pipeline,
+        entity_validator=entity_validator,
+        profile_builder=profile_builder,
     )
 
     return ResumeResponse.model_validate(resume)

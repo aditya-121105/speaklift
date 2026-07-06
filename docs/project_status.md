@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 6, 2026 | Sprint C4.5 Completed: Resume NLP Pipeline (Project & Certification Extraction)
+> **Living Document** | Last Updated: July 6, 2026 | Sprint C4.7 Completed: CandidateProfile Business Layer
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
@@ -944,7 +944,7 @@ Resume Parsing             █████████████████�
   ├─ DocumentExtractionService    ████████████████████ 100%
   └─ Tests (47 passing)           ████████████████████ 100%
 
-Resume NLP Pipeline        ██████████████████░░  95%  ← Sprint C4.5 complete
+Resume NLP Pipeline        ████████████████████ 100%  ← Sprint C4.6 complete
   ├─ NLP Infrastructure (C4.1)    ████████████████████ 100%
   ├─ Extractor Infrastructure (C4.2) ████████████████████ 100%
   ├─ Contact Extraction (C4.3)    ████████████████████ 100%
@@ -952,7 +952,8 @@ Resume NLP Pipeline        █████████████████�
   ├─ Education Extraction (C4.4)  ████████████████████ 100%
   ├─ Experience Extraction (C4.4) ████████████████████ 100%
   ├─ Project Extraction (C4.5)    ████████████████████ 100%
-  └─ Certification Extraction (C4.5) ████████████████████ 100%
+  ├─ Certification Extraction (C4.5) ████████████████████ 100%
+  └─ Entity Validation (C4.6)     ████████████████████ 100%
 
 Voice / Speech (Whisper)   ░░░░░░░░░░░░░░░░░░░░   0%
 
@@ -1379,13 +1380,17 @@ Extractor Registry
 ContactExtractor ──→ SkillExtractor ──→ EducationExtractor ──→ ExperienceExtractor
      ↓
 ExtractedEntities
+     ↓
+EntityValidator
+     ↓
+Validated ExtractedEntities
+     ↓
+CandidateProfileBuilder
+     ↓
+CandidateProfile
 ```
 
 ### Not Yet Implemented
-*   ProjectExtractor
-*   CertificationExtractor
-*   EntityValidator
-*   CandidateProfileBuilder
 *   Resume parsing integration
 *   Interview Context Builder
 
@@ -1404,9 +1409,9 @@ ExtractedEntities
 *   **Skill Extraction**: 100%
 *   **Education Extraction**: 100%
 *   **Experience Extraction**: 100%
-*   **Project Extraction**: 0%
-*   **Certification Extraction**: 0%
-*   **Candidate Profile Builder**: 0%
+*   **Project Extraction**: 100%
+*   **Certification Extraction**: 100%
+*   **Candidate Profile Builder**: 100%
 *   **Interview Context Builder**: 0%
 *   **LLM Integration**: 0%
 *   **Embeddings**: 0%
@@ -1425,16 +1430,78 @@ ExtractedEntities
 
 ---
 
+## Sprint C4.6 — Entity Validation
+
+### Objectives
+*   Introduce deterministic validation layer.
+*   Validate extracted entities.
+*   Preserve immutable pipeline.
+
+### Completed
+*   Validator abstract base class.
+*   DuplicateValidator.
+*   ChronologyValidator.
+*   ConfidenceValidator.
+*   URLValidator.
+*   EntityValidator orchestrator.
+*   Comprehensive unit tests.
+
+### Architecture Decisions
+*   Validators are stateless.
+*   Validators operate only on ExtractedEntities.
+*   Validators never parse raw resume text.
+*   EntityValidator only orchestrates.
+*   Validation remains deterministic.
+*   Pydantic model_copy() preserves immutability.
+
+### Testing
+*   Duplicate validation.
+*   Chronology validation.
+*   Confidence validation.
+*   URL validation.
+*   Integration validation.
+*   Architecture audit passed.
+
+## Sprint C4.7 — CandidateProfile Business Layer
+
+### Objectives
+*   Introduce the CandidateProfile business aggregate.
+*   Bridge the deterministic NLP pipeline with the business layer.
+*   Keep AI extraction completely separated from business representation.
+
+### Completed
+*   CandidateProfile immutable schemas
+*   CandidateProfileBuilder
+*   IdentityProfile
+*   CareerProfile
+*   EducationProfile
+*   TechnologyProfile
+*   ProfileMetadata
+*   CareerStage enum
+*   Comprehensive unit tests
+*   Architecture audit passed
+
+### Architecture Decisions
+*   CandidateProfile lives inside app/services/candidate_profile.
+*   CandidateProfileBuilder is the only component allowed to construct CandidateProfile.
+*   CandidateProfile is immutable and represents a snapshot.
+*   Builder performs deterministic aggregation only.
+*   No NLP logic exists inside the business layer.
+*   AI and Business layers remain completely separated.
+
+### Testing
+*   Identity mapping
+*   Career aggregation
+*   Qualification ranking
+*   Technology grouping
+*   Metadata generation
+*   Architecture audit passed with no remaining issues.
+
+---
+
 ## Next Sprint
 
-### Current Sprint
-*   **Completed**: Sprint C4.4 (Education & Experience Extraction)
-
-### Next Sprint
-*   **Sprint**: C4.5
-*   **Scope**:
-    *   `ProjectExtractor`
-    *   `CertificationExtractor`
+### Sprint C4.8 — Resume Parsing Integration
 
 ---
 

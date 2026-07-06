@@ -2522,11 +2522,32 @@ def test_concurrent_load():
 - [x] Experience Extraction
 - [x] Project Extraction
 - [x] Certification Extraction
+- [x] Entity Validation
+- [x] CandidateProfile Business Layer
+- [x] CandidateProfileBuilder
 
 **Remaining:**
-- [ ] Entity Validation
-- [ ] Candidate Profile Builder
 - [ ] Resume Parsing Integration
+
+**Validation Pipeline:**
+```
+Extractors
+     ↓
+ExtractedEntities
+     ↓
+EntityValidator
+     ↓
+Validated ExtractedEntities
+     ↓
+CandidateProfileBuilder
+     ↓
+CandidateProfile
+```
+
+**Architecture Boundaries:**
+- CandidateProfile belongs to the Business Layer.
+- CandidateProfileBuilder performs deterministic aggregation only.
+- AI/NLP never exposes internal extraction structures to downstream consumers.
 
 ---
 
