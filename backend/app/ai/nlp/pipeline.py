@@ -1,4 +1,5 @@
 import time
+from pydantic import BaseModel
 from app.ai.document_processing.schemas import DocumentContent
 from app.ai.nlp.processors.spacy_processor import SpacyProcessor
 from app.ai.nlp.processors.normalizer import Normalizer
@@ -25,7 +26,7 @@ class NLPPipeline:
         self._normalizer = normalizer
         self._registry = registry
 
-    def run(self, document: DocumentContent) -> ExtractedEntities:
+    def run(self, document: DocumentContent) -> BaseModel:
         """
         Execute the NLP pipeline on the given document.
         """
@@ -53,6 +54,30 @@ class NLPPipeline:
 
         # 5. Build Final Output
         processing_time_ms = int((time.time() - start_time) * 1000)
+
+        schema_cls = getattr(self._registry, "schema_cls", ExtractedEntities)
+        if schema_cls.__name__ == "ExtractedJDEntities":
+            # Provide defaults for non-list complex objects in JD
+            from app.ai.nlp.schemas.jd.jd_employment_schema import JDEmploymentRecord
+            from app.ai.nlp.schemas.jd.jd_company_schema import JDCompanyRecord
+            return schema_cls(
+                employment=extracted_kwargs.get("employment", JDEmploymentRecord(
+                    job_title=None, location=None, remote_type=None, salary=None, confidence=0.0
+                )),
+                skills=extracted_kwargs.get("skills", []),
+                experience=extracted_kwargs.get("experience", []),
+                education=extracted_kwargs.get("education", []),
+                responsibilities=extracted_kwargs.get("responsibilities", []),
+                company=extracted_kwargs.get("company", JDCompanyRecord(
+                    company_name=None, industry=None, company_size=None,
+                    culture_keywords=None, website=None, confidence=0.0
+                )),
+                source_filename=document.source_filename,
+                pipeline_version="C.5.2",
+                processing_time_ms=processing_time_ms,
+                document_language="en",
+                model_version="en_core_web_sm"
+            )
 
         return ExtractedEntities(
             contact=extracted_kwargs.get("contact", ContactInfo(

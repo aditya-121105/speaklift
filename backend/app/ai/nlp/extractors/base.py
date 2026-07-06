@@ -27,6 +27,7 @@ class EntityExtractor(ABC):
         pass
 
 
+from pydantic import BaseModel
 from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 
 
@@ -34,11 +35,12 @@ class ExtractorRegistry:
     """
     Registry for EntityExtractors to support a plugin-based architecture.
     """
-    def __init__(self) -> None:
+    def __init__(self, schema_cls: type[BaseModel] = ExtractedEntities) -> None:
         self._extractors: list[EntityExtractor] = []
         self._registered_domains: set[str] = set()
-        # Valid domains are the fields defined on the ExtractedEntities output schema
-        self._valid_domains: set[str] = set(ExtractedEntities.model_fields.keys())
+        self.schema_cls = schema_cls
+        # Valid domains are the fields defined on the given schema
+        self._valid_domains: set[str] = set(schema_cls.model_fields.keys())
 
     def register(self, extractor: EntityExtractor) -> None:
         """Register an instantiated extractor."""
