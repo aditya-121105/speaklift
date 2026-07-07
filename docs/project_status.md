@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 6, 2026 | Sprint C4.7 Completed: CandidateProfile Business Layer
+> **Living Document** | Last Updated: July 7, 2026 | Sprint C5.2.5 Completed: JD Validation Layer
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
@@ -1367,31 +1367,31 @@ With Sprint A through Sprint C completed and deployed, this project would be str
 ```
 Resume Upload
      ↓
-Document Extraction
+Resume Upload
      ↓
-Text Cleaning
+ResumeService
      ↓
-spaCy Processing
+DocumentExtractionService
      ↓
-Normalizer
+DocumentContent
      ↓
-Extractor Registry
-     ↓
-ContactExtractor ──→ SkillExtractor ──→ EducationExtractor ──→ ExperienceExtractor
+NLPPipeline
      ↓
 ExtractedEntities
      ↓
 EntityValidator
      ↓
-Validated ExtractedEntities
+ValidatedExtractedEntities
      ↓
 CandidateProfileBuilder
      ↓
 CandidateProfile
+     ↓
+Parsing Completed
 ```
 
 ### Not Yet Implemented
-*   Resume parsing integration
+*   Resume ↔ Job Description Matching
 *   Interview Context Builder
 
 ---
@@ -1412,6 +1412,7 @@ CandidateProfile
 *   **Project Extraction**: 100%
 *   **Certification Extraction**: 100%
 *   **Candidate Profile Builder**: 100%
+*   **Resume Parsing Integration**: 100%
 *   **Interview Context Builder**: 0%
 *   **LLM Integration**: 0%
 *   **Embeddings**: 0%
@@ -1499,9 +1500,302 @@ CandidateProfile
 
 ---
 
+## Sprint C4.8 — Resume Parsing Integration
+
+### Objectives
+*   Integrate all previously implemented AI pipeline components.
+*   Complete the deterministic resume processing workflow.
+*   Keep ResumeService as a pure orchestrator.
+
+### Completed
+*   AI dependency injection layer
+*   ResumeService orchestration
+*   DocumentExtractionService integration
+*   NLPPipeline integration
+*   EntityValidator integration
+*   CandidateProfileBuilder integration
+*   Parsing status transitions
+*   End-to-end orchestration tests
+*   Architecture audit passed
+
+### Architecture Decisions
+*   ResumeService remains an orchestrator only.
+*   AI components are injected through dependency factories.
+*   CandidateProfile is built but not persisted.
+*   No NLP logic exists inside ResumeService.
+*   Dependency Injection remains the single construction mechanism.
+
+### Testing
+*   Happy path orchestration
+*   Extraction failure
+*   NLP failure
+*   Validation failure
+*   Builder failure
+*   Parsing status transitions
+*   Dependency injection tests
+*   Full orchestration tests
+*   Architecture audit passed
+
+---
+
+## Sprint C5.1A — Job Description Architecture
+*   ✓ Completed (Architecture Frozen)
+
+## Sprint C5.1B — Job Description Infrastructure
+
+### Objectives
+*   Introduce Job Description upload capability.
+*   Reuse the Resume document processing infrastructure.
+*   Stop processing at DocumentContent generation.
+*   Prepare the foundation for the JD NLP Pipeline.
+
+### Completed
+*   JobDescription model
+*   JobDescription repository
+*   JobDescription schemas
+*   JobDescriptionService
+*   Upload API endpoints
+*   Dependency Injection integration
+*   Storage integration
+*   Shared DocumentExtractionService reuse
+*   Shared TextCleaner reuse
+*   Shared SectionDetector reuse
+*   TXT document support
+*   Service orchestration tests
+*   Architecture audit passed
+
+### Architecture Decisions
+*   Maximum infrastructure reuse.
+*   No duplicate document processing pipeline.
+*   JobDescriptionService remains an orchestrator.
+*   Processing stops after DocumentContent.
+*   No NLP executed.
+*   No JobProfile generation.
+*   No business reasoning introduced.
+
+### Testing
+*   Upload success
+*   Invalid MIME
+*   Storage failure
+*   Extraction failure
+*   Dependency injection
+*   Repository tests
+*   Service orchestration
+*   Architecture audit passed
+
+---
+
+## Sprint C5.2.1 — JD NLP Infrastructure
+
+### Objectives
+*   Establish the JD NLP schema layer.
+*   Introduce the JD ExtractorRegistry.
+*   Extend the shared NLPPipeline to support multiple extraction domains.
+*   Preserve complete backward compatibility with the Resume pipeline.
+
+### Completed
+*   JD schema package
+*   SalaryRange schema
+*   RequirementTier enum
+*   ExtractedJDEntities DTO
+*   JD extractor package
+*   Registry factory
+*   Polymorphic ExtractorRegistry
+*   Polymorphic NLPPipeline
+*   Infrastructure tests
+*   Architecture audit passed
+
+### Architecture Decisions
+*   Shared NLPPipeline now supports multiple schema targets.
+*   Shared ExtractorRegistry now accepts schema_cls.
+*   Resume pipeline remains unchanged.
+*   JD infrastructure contains no extraction logic.
+*   Confidence remains extractor-owned.
+*   RequirementTier includes UNKNOWN.
+
+### Testing
+*   Schema immutability
+*   Registry wiring
+*   Pipeline compatibility
+*   Empty registry behaviour
+*   Package exports
+*   Resume backward compatibility
+*   Architecture audit passed
+
+---
+
+## Sprint C5.2.2 — JD Skill Extraction
+
+### Objectives
+*   Implement deterministic Job Description skill extraction.
+*   Reuse existing NLP infrastructure.
+*   Support requirement tier classification.
+*   Preserve Resume/JD extractor independence.
+
+### Completed
+*   JDSkillExtractor
+*   RequirementTier support
+*   UNKNOWN tier
+*   Section-aware extraction
+*   Linguistic cue detection
+*   Taxonomy normalization
+*   Synonym normalization
+*   Duplicate consolidation
+*   Confidence filtering inside extractor
+*   Registry integration
+*   Unit tests
+*   Architecture audit passed
+
+### Architecture Decisions
+*   Resume and JD extractors remain completely independent.
+*   Confidence filtering is extractor-owned.
+*   Requirement tiers never guessed.
+*   UNKNOWN introduced for ambiguous requirements.
+*   TaxonomyResourceManager reused.
+*   No business logic introduced.
+
+### Testing
+*   Tier detection
+*   Taxonomy normalization
+*   Synonym resolution
+*   Duplicate resolution
+*   Section awareness
+*   Empty document handling
+*   Confidence filtering
+*   Architecture audit passed
+
+---
+
+## Sprint C5.2.3 — JD Employment & Experience Extraction
+
+### Objectives
+*   Implement deterministic JDEmploymentExtractor.
+*   Implement deterministic JDExperienceExtractor.
+*   Normalize salary structures.
+*   Normalize experience ranges.
+*   Preserve AI/business separation.
+
+### Completed
+*   JDEmploymentExtractor
+*   JDExperienceExtractor
+*   SalaryRange normalization
+*   EmploymentType extraction
+*   RemoteType extraction
+*   SalaryPeriod handling
+*   Experience range extraction
+*   Domain association
+*   Registry integration
+*   Unit tests
+*   Architecture audit passed
+
+### Engineering Decisions
+*   SalaryPeriod is never guessed.
+*   Missing currency remains None.
+*   Missing salary period remains None.
+*   Job titles extracted only from deterministic locations.
+*   Experience never inferred from titles.
+*   Resume extractor independence maintained.
+*   Shared infrastructure reused.
+
+### Testing
+*   Salary normalization
+*   Currency normalization
+*   Period handling
+*   Employment types
+*   Remote types
+*   Experience ranges
+*   Freshers handling
+*   Domain mapping
+*   Empty documents
+*   Audit passed
+
+---
+
+## Sprint C5.2.4 — JD Responsibilities & Education Extraction
+
+### Objectives
+*   Implement deterministic JDResponsibilityExtractor.
+*   Implement deterministic JDEducationExtractor.
+*   Complete the JD extraction layer.
+*   Preserve strict AI/business separation.
+
+### Completed
+*   JDResponsibilityExtractor
+*   JDEducationExtractor
+*   Responsibility noun phrase support
+*   Action-verb responsibility extraction
+*   Canonical degree normalization
+*   Field-of-study extraction
+*   Registry integration
+*   Unit tests
+*   Architecture audit passed
+
+### Engineering Decisions
+*   Responsibilities preserve employer wording.
+*   Responsibilities support both action verbs and responsibility noun phrases.
+*   Responsibilities never infer competencies.
+*   Degree normalization is canonical only.
+*   No academic ranking.
+*   Equivalent practical experience produces no education record.
+*   Resume/JD extractor independence preserved.
+*   Shared infrastructure reused.
+
+### Testing
+*   Action-verb responsibilities
+*   Responsibility noun phrases
+*   Deduplication
+*   Mixed responsibility/requirement sections
+*   Bachelor's normalization
+*   Master's normalization
+*   PhD normalization
+*   Indian degree support
+*   Field-of-study extraction
+*   Equivalent practical experience
+*   Audit passed
+
+---
+
+## Sprint C5.2.5 — JD Validation Layer
+
+### Objectives
+*   Complete deterministic validation for JD entities.
+*   Reuse the existing validator framework.
+*   Preserve immutable DTO architecture.
+*   Finalize the JD AI validation pipeline.
+
+### Completed
+*   SalaryRangeValidator
+*   ExperienceRangeValidator
+*   Generic Validator[T]
+*   Generic EntityValidator orchestration
+*   JD duplicate validation
+*   Immutable validation flow
+*   Architecture audit passed
+
+### Engineering Decisions
+*   Validators operate as filters only.
+*   Invalid entities are discarded rather than corrected.
+*   No ValidatedJDEntities DTO introduced.
+*   Resume/JD validation symmetry preserved.
+*   Generic Validator[T] adopted.
+*   Existing EntityValidator reused.
+*   No business reasoning introduced.
+
+### Testing
+*   Salary validation
+*   Experience validation
+*   Duplicate validation
+*   Generic validator behaviour
+*   Immutable object creation
+*   End-to-end validator chain
+*   Architecture audit passed
+
+---
+
 ## Next Sprint
 
-### Sprint C4.8 — Resume Parsing Integration
+### Sprint C5.3
+JobProfile Builder
 
 ---
 

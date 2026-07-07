@@ -2513,40 +2513,67 @@ def test_concurrent_load():
 
 ---
 
-## NLP Implementation Progress
+## AI Implementation Roadmap
 
 **Completed:**
-- [x] Contact Extraction
-- [x] Skill Extraction
-- [x] Education Extraction
-- [x] Experience Extraction
-- [x] Project Extraction
-- [x] Certification Extraction
-- [x] Entity Validation
-- [x] CandidateProfile Business Layer
-- [x] CandidateProfileBuilder
+- [x] Resume NLP
+- [x] CandidateProfile
+- [x] JD Infrastructure
+- [x] JD NLP Infrastructure
+- [x] JD Skill Extraction
+- [x] JD Employment Extraction
+- [x] JD Experience Extraction
+- [x] JD Responsibility Extraction
+- [x] JD Education Extraction
+- [x] JD Validation
 
 **Remaining:**
-- [ ] Resume Parsing Integration
+- [ ] JobProfile Builder
+- [ ] Resume ↔ JD Matching
+- [ ] Interview Context Builder
+- [ ] Interview Planner
+- [ ] Answer Evaluation
+- [ ] Voice Pipeline
+- [ ] LLM Enrichment
 
-**Validation Pipeline:**
-```
-Extractors
+**Resume Pipeline:**
+```text
+Resume
      ↓
-ExtractedEntities
-     ↓
-EntityValidator
-     ↓
-Validated ExtractedEntities
-     ↓
-CandidateProfileBuilder
+Document Processing
      ↓
 CandidateProfile
 ```
 
+**Job Description Pipeline:**
+```text
+Job Description
+     ↓
+Document Processing
+     ↓
+DocumentContent
+```
+
 **Architecture Boundaries:**
-- CandidateProfile belongs to the Business Layer.
-- CandidateProfileBuilder performs deterministic aggregation only.
+- The complete JD AI pipeline is now finished.
+- The AI layer now consists of:
+  - Extraction
+  - Validation
+- Supported deterministic extraction includes:
+  - Skills
+  - Employment metadata
+  - Salary normalization
+  - Experience ranges
+  - Responsibilities
+  - Education
+- Extraction and validation remain fully deterministic and business-agnostic.
+- Business reasoning remains outside the AI layer.
+- Resume and JD extraction remain architecturally independent while sharing infrastructure.
+- The NLPPipeline is polymorphic.
+- Generic Validator[T] architecture adopted.
+- EntityValidator reused across Resume and JD.
+- Immutable DTO validation preserved.
+- Document processing infrastructure is shared.
 - AI/NLP never exposes internal extraction structures to downstream consumers.
 
 ---

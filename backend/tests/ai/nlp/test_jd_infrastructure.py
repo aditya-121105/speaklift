@@ -13,6 +13,7 @@ from app.ai.nlp.schemas.jd import (
     JDCompanyRecord,
     ExtractedJDEntities,
 )
+from app.ai.nlp.schemas.jd.jd_employment_schema import EmploymentType, RemoteType
 from app.ai.nlp.extractors.jd import get_jd_extractor_registry
 from app.ai.nlp.pipeline import NLPPipeline
 from app.ai.nlp.processors.spacy_processor import SpacyProcessor
@@ -39,7 +40,14 @@ def test_schema_immutability():
     with pytest.raises(ValidationError):
         edu.min_degree_level = "Masters"
 
-    emp = JDEmploymentRecord(job_title="Dev", location="Remote", remote_type="Full", salary=salary, confidence=0.95)
+    emp = JDEmploymentRecord(
+        job_title="Dev", 
+        location="Remote", 
+        remote_type=RemoteType.REMOTE, 
+        employment_type=EmploymentType.FULL_TIME,
+        salary=salary, 
+        confidence=0.95
+    )
     with pytest.raises(ValidationError):
         emp.job_title = "Senior Dev"
 

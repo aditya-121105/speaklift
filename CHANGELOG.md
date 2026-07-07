@@ -7,7 +7,168 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- Resume Parsing Integration (Sprint C4.8)
+- JobProfile Builder
+- Resume ↔ JD Matching
+- Interview Context Builder
+
+---
+
+## [0.5.6] - 2026-07-07
+
+### Added
+
+- SalaryRangeValidator
+- ExperienceRangeValidator
+- Generic Validator[T]
+- JD validator integration tests
+
+### Changed
+
+- EntityValidator now supports generic immutable entity validation.
+- DuplicateValidator extended to JD entities.
+
+### Fixed
+
+- Removed DTO duplication from JD validation.
+- Validation now discards invalid entities instead of correcting them.
+
+---
+
+## [0.5.5] - 2026-07-07
+
+### Added
+
+- JDResponsibilityExtractor
+- JDEducationExtractor
+- Responsibility noun phrase extraction
+- Canonical degree normalization
+- Field-of-study extraction
+- Responsibility tests
+- Education tests
+
+### Changed
+
+- JD ExtractorRegistry now includes all core JD extractors.
+
+### Fixed
+
+- Prevented competency inference from responsibilities.
+- Prevented academic ranking during education extraction.
+
+---
+
+## [0.5.4] - 2026-07-07
+
+### Added
+
+- JDEmploymentExtractor
+- JDExperienceExtractor
+- Salary normalization
+- EmploymentType extraction
+- RemoteType extraction
+- Experience range extraction
+- JD employment tests
+- JD experience tests
+
+### Changed
+
+- JD registry now includes Employment and Experience extractors.
+- Salary DTO refined with SalaryPeriod.
+
+### Fixed
+
+- SalaryPeriod is never inferred.
+- Experience is never inferred from job titles.
+
+---
+
+## [0.5.3] - 2026-07-06
+
+### Added
+
+- Deterministic JDSkillExtractor
+- RequirementTier enum support
+- UNKNOWN requirement tier
+- Section-aware JD skill extraction
+- Confidence filtering during extraction
+- JD Skill extractor tests
+
+### Changed
+
+- JD ExtractorRegistry now includes JDSkillExtractor.
+- JD NLP pipeline now performs deterministic skill extraction.
+
+### Fixed
+
+- Prevented ambiguous requirements from being incorrectly promoted to REQUIRED.
+
+---
+
+## [0.5.2] - 2026-07-06
+
+### Added
+
+- JD NLP schema package
+- SalaryRange schema
+- RequirementTier enum
+- ExtractedJDEntities DTO
+- JD extractor registry package
+- JD NLP infrastructure tests
+
+### Changed
+
+- ExtractorRegistry now supports configurable output schemas.
+- NLPPipeline now supports polymorphic schema orchestration while remaining backward compatible.
+
+### Fixed
+
+- Eliminated the need for duplicate NLP pipelines for Resume and Job Description.
+
+---
+
+## [0.5.1] - 2026-07-06
+
+### Added
+
+- Job Description upload infrastructure
+- JobDescription ORM model
+- Repository layer
+- Service layer
+- REST API endpoints
+- Dependency injection
+- TXT Job Description support
+- Shared document processing reuse
+- Job Description orchestration tests
+
+### Changed
+
+- SectionDetector now supports both Resume and Job Description headings while remaining reusable.
+- Shared document processing infrastructure now serves multiple document types.
+
+### Fixed
+
+- Eliminated infrastructure duplication between Resume and Job Description pipelines.
+
+---
+
+## [0.4.8] - 2026-07-06
+
+### Added
+
+- AI dependency injection module
+- End-to-end resume orchestration
+- ResumeService integration with AI pipeline
+- CandidateProfile integration
+- Resume orchestration tests
+
+### Changed
+
+- Resume upload now executes the complete deterministic AI processing pipeline.
+
+### Fixed
+
+- Resume parsing state transitions are now fully deterministic.
+- Failure handling guarantees consistent parsing states.
 
 ---
 

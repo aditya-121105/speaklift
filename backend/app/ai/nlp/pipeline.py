@@ -62,7 +62,7 @@ class NLPPipeline:
             from app.ai.nlp.schemas.jd.jd_company_schema import JDCompanyRecord
             return schema_cls(
                 employment=extracted_kwargs.get("employment", JDEmploymentRecord(
-                    job_title=None, location=None, remote_type=None, salary=None, confidence=0.0
+                    job_title=None, location=None, remote_type=None, employment_type=None, salary=None, confidence=0.0
                 )),
                 skills=extracted_kwargs.get("skills", []),
                 experience=extracted_kwargs.get("experience", []),
