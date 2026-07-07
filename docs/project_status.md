@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 7, 2026 | Sprint C5.2.5 Completed: JD Validation Layer
+> **Living Document** | Last Updated: July 7, 2026 | Sprint C6.2 Completed: Skill Matcher
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
@@ -1792,10 +1792,81 @@ Parsing Completed
 
 ---
 
+## Sprint C5.3 — JobProfile Builder
+
+### Objectives
+*   Implement JobProfileBuilder.
+*   Introduce immutable JobProfile business aggregate.
+*   Build the translation boundary separating the AI Layer from the Business Layer.
+
+### Completed
+*   JobProfileBuilder implementation completed.
+*   Immutable JobProfile business aggregate introduced.
+*   Complete JobProfile schema hierarchy:
+    *   JobIdentity
+    *   RequirementsProfile
+    *   TechnologyProfile
+    *   QualificationProfile
+    *   EmploymentProfile
+    *   CompanyProfile
+    *   ProfileMetadata
+
+### Architectural Decisions
+*   AI Layer officially ends at ExtractedJDEntities.
+*   Business Layer officially begins at JobProfileBuilder.
+*   TechNode schema successfully reused from CandidateProfile to guarantee O(1) matching.
+*   Four requirement buckets explicitly preserved (required, preferred, optional, unknown).
+*   UNKNOWN tiers are strictly preserved and never heuristically promoted.
+*   SeniorityLevel intentionally deferred to the future Matching Engine (Business logic vs AI fact).
+*   AI telemetry (processing time, pipeline version) explicitly excluded from ProfileMetadata.
+*   Builder designed to be fully deterministic, immutable, and stateless.
+
+### Testing
+*   Expanded JobProfileBuilder regression suite with edge-case handling.
+*   Confirmed empty entity fallbacks and defaults.
+*   Confirmed taxonomy missing-skill fallback (`tools`).
+*   Confirmed enum mapping behavior.
+*   Entire backend regression suite passes perfectly (179 tests passing).
+
+---
+
+## Sprint C6.2 — Skill Matcher
+
+### Objectives
+*   Implement the first deterministic business matcher (`SkillMatcher`).
+*   Establish the baseline for comparing Candidate and Job technology aggregates.
+*   Guarantee strict separation from NLP extraction logics.
+
+### Completed
+*   MatchStatistics implemented as a reusable factual schema.
+*   SkillMatchResult implemented.
+*   SkillMatcher implemented.
+*   Deterministic comparison algorithms applied for `REQUIRED`, `PREFERRED`, `OPTIONAL`, and `UNKNOWN` tiers.
+*   Deterministic score generation and metrics extraction.
+
+### Architectural Decisions
+*   The `SkillMatcher` belongs completely to the Business Layer and never invokes AI/NLP services.
+*   Reused the existing `TechNode` business model to ensure `O(1)` match determinism.
+*   Stateless architecture ensuring perfectly predictable results for identical inputs.
+*   UNKNOWN requirement tiers are rigorously preserved without heuristic promotion.
+*   Immutable outputs. Facts are computed before business interpretations.
+
+### Testing
+*   7 new tests added targeting exact matches, missing fields, requirement boundaries, and graceful empty inputs.
+*   Entire backend regression suite passes perfectly (186 tests passing).
+
+---
+
 ## Next Sprint
 
-### Sprint C5.3
-JobProfile Builder
+### Sprint C6.x
+Resume ↔ Job Matching Engine (Continuing)
+
+*   ExperienceMatcher
+*   EducationMatcher
+*   MatchResultBuilder
+*   MatchingEngine
+*   Matching Integration
 
 ---
 

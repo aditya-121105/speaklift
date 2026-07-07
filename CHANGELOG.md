@@ -6,10 +6,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
-- JobProfile Builder
-- Resume ↔ JD Matching
+- ExperienceMatcher
+- EducationMatcher
+- MatchResultBuilder
+- MatchingEngine
+- Matching Integration
 - Interview Context Builder
+- Interview Planner
+- Question Selection
+- Answer Evaluation
+
+---
+
+## [0.5.8] - 2026-07-07
+
+### Added
+
+- MatchStatistics
+- SkillMatchResult
+- SkillMatcher
+- Skill matching infrastructure
+- Deterministic technology comparison
+- Shared matching statistics
+
+### Testing
+
+- SkillMatcher unit tests
+- MatchStatistics tests
+- SkillMatchResult tests
+- Regression coverage
+
+### Architecture
+
+- Introduced reusable matching schema layer
+- Introduced first Business Matcher
+- Reused TechNode
+- Preserved RequirementTier semantics
+- Maintained AI/Business separation
+- Stateless deterministic matcher design
+
+---
+
+## [0.5.7] - 2026-07-07
+
+### Added
+
+- JobProfile business aggregate.
+- JobProfileBuilder.
+- Business schemas.
+- Technology categorization.
+- Requirement aggregation.
+- Qualification aggregation.
+- Employment aggregation.
+- Company profile placeholder.
+- Metadata aggregation.
+
+### Testing
+
+- Expanded JobProfileBuilder regression suite.
+- Empty entity handling.
+- Taxonomy fallback.
+- Enum mapping verification.
+
+### Architecture
+
+- Reused TechNode.
+- Preserved UNKNOWN requirement tier.
+- Deferred Seniority computation.
+- Business metadata separated from AI telemetry.
 
 ---
 

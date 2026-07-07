@@ -2522,19 +2522,19 @@ def test_concurrent_load():
 - [x] JD NLP Infrastructure
 - [x] JD Skill Extraction
 - [x] JD Employment Extraction
-- [x] JD Experience Extraction
-- [x] JD Responsibility Extraction
-- [x] JD Education Extraction
-- [x] JD Validation
+**Completed:**
+- [x] Resume AI Pipeline
+- [x] JD AI Pipeline
+- [x] CandidateProfile Builder
+- [x] JobProfile Builder
+- [x] SkillMatcher
 
 **Remaining:**
-- [ ] JobProfile Builder
-- [ ] Resume ↔ JD Matching
+- [ ] Resume ↔ Job Matching Engine (Experience, Education, Integration)
 - [ ] Interview Context Builder
 - [ ] Interview Planner
+- [ ] Question Selection
 - [ ] Answer Evaluation
-- [ ] Voice Pipeline
-- [ ] LLM Enrichment
 
 **Resume Pipeline:**
 ```text
@@ -2556,9 +2556,22 @@ DocumentContent
 
 **Architecture Boundaries:**
 - The complete JD AI pipeline is now finished.
-- The AI layer now consists of:
-  - Extraction
-  - Validation
+- The AI Layer officially terminates at: `ExtractedJDEntities`
+- The `JobProfileBuilder` belongs exclusively to the Business Layer.
+- The definitive translation boundary is:
+  `ExtractedJDEntities` ↓ `JobProfileBuilder` ↓ `JobProfile`
+- AI performs extraction only.
+- Business performs aggregation only.
+- Matching performs reasoning.
+
+**Matching Layer Guidelines:**
+- The Matching Engine operates purely on Business Aggregates (`CandidateProfile` & `JobProfile`).
+- **SkillMatcher** represents the first deterministic comparison algorithm.
+- TechNode business models are rigorously reused; no duplicate models exist.
+- Requirement tier semantics (REQUIRED, PREFERRED, OPTIONAL, UNKNOWN) are strictly preserved and never assumed.
+- Outputs must be stateless, deterministic, and immutable (`MatchStatistics`, `SkillMatchResult`).
+- Facts are computed *before* interpretation.
+- Deterministic extraction and matching never invoke AI services or NLP libraries.
 - Supported deterministic extraction includes:
   - Skills
   - Employment metadata
