@@ -2,7 +2,7 @@ from pydantic import BaseModel, ConfigDict
 from enum import Enum
 
 
-class Period(str, Enum):
+class SalaryPeriod(str, Enum):
     YEAR = "YEAR"
     MONTH = "MONTH"
     DAY = "DAY"
@@ -18,5 +18,5 @@ class SalaryRange(BaseModel):
     minimum: float | None
     maximum: float | None
     currency: str | None
-    period: Period | None
+    period: SalaryPeriod | None
     confidence: float

@@ -3,7 +3,7 @@ from pydantic import ValidationError
 
 from app.ai.nlp.schemas.jd import (
     SalaryRange,
-    Period,
+    SalaryPeriod,
     JDSkillRecord,
     RequirementTier,
     JDExperienceRecord,
@@ -22,7 +22,7 @@ from app.ai.document_processing.schemas import DocumentContent
 
 def test_schema_immutability():
     """Verify that JD schemas are frozen/immutable."""
-    salary = SalaryRange(minimum=100, maximum=150, currency="USD", period=Period.YEAR, confidence=1.0)
+    salary = SalaryRange(minimum=100, maximum=150, currency="USD", period=SalaryPeriod.YEAR, confidence=1.0)
     
     with pytest.raises(ValidationError):
         salary.minimum = 200
