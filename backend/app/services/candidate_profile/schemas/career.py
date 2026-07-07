@@ -1,6 +1,6 @@
 from enum import Enum
 from pydantic import BaseModel, ConfigDict
-from app.ai.nlp.schemas.experience_schema import ExperienceRecord
+from .career_position import CareerPosition
 
 
 class CareerStage(str, Enum):
@@ -20,4 +20,4 @@ class CareerProfile(BaseModel):
     most_recent_employer: str | None = None
     total_months_experience: int
     internship_months: int
-    positions: list[ExperienceRecord]
+    positions: list[CareerPosition]

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from app.ai.nlp.schemas.project_schema import ProjectRecord
-from app.ai.nlp.schemas.certification_schema import CertificationRecord
+from .candidate_project import CandidateProject
+from .candidate_certification import CandidateCertification
 
 from .identity import IdentityProfile
 from .career import CareerProfile
@@ -20,6 +20,6 @@ class CandidateProfile(BaseModel):
     career: CareerProfile
     education: EducationProfile
     technology: TechnologyProfile
-    projects: list[ProjectRecord]
-    certifications: list[CertificationRecord]
+    projects: list[CandidateProject]
+    certifications: list[CandidateCertification]
     metadata: ProfileMetadata

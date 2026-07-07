@@ -1,6 +1,6 @@
 from pydantic import BaseModel, ConfigDict
-from app.ai.nlp.schemas.education_schema import EducationRecord
-from app.ai.nlp.schemas.certification_schema import CertificationRecord
+from .academic_degree import AcademicDegree
+from .candidate_certification import CandidateCertification
 
 
 class EducationProfile(BaseModel):
@@ -8,5 +8,5 @@ class EducationProfile(BaseModel):
     highest_qualification: str | None = None
     latest_institution: str | None = None
     is_currently_studying: bool = False
-    degrees: list[EducationRecord]
-    certifications: list[CertificationRecord]
+    degrees: list[AcademicDegree]
+    certifications: list[CandidateCertification]

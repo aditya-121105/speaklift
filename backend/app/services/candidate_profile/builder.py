@@ -8,6 +8,10 @@ from app.ai.nlp.schemas.skill_schema import SkillEntry
 from .schemas.profile import CandidateProfile
 from .schemas.identity import IdentityProfile, ContactInformation, SocialProfile
 from .schemas.career import CareerProfile, CareerStage
+from .schemas.career_position import CareerPosition
+from .schemas.academic_degree import AcademicDegree
+from .schemas.candidate_certification import CandidateCertification
+from .schemas.candidate_project import CandidateProject
 from .schemas.education import EducationProfile
 from .schemas.technology import TechnologyProfile, TechNode
 from .schemas.metadata import ProfileMetadata
@@ -26,13 +30,37 @@ class CandidateProfileBuilder:
         technology = self._build_technology(entities)
         metadata = self._build_metadata(entities)
 
+        projects = [
+            CandidateProject(
+                name=p.name,
+                description=p.description,
+                technologies=p.technologies,
+                skills=p.skills,
+                start_date=p.start_date,
+                end_date=p.end_date
+            )
+            for p in entities.projects
+        ]
+
+        certifications = [
+            CandidateCertification(
+                name=c.name,
+                issuing_organization=c.issuing_organization,
+                issue_date=c.issue_date,
+                expiry_date=c.expiry_date,
+                credential_id=c.credential_id,
+                credential_url=c.credential_url
+            )
+            for c in entities.certifications
+        ]
+
         return CandidateProfile(
             identity=identity,
             career=career,
             education=education,
             technology=technology,
-            projects=entities.projects,
-            certifications=entities.certifications,
+            projects=projects,
+            certifications=certifications,
             metadata=metadata
         )
 
@@ -75,13 +103,29 @@ class CandidateProfileBuilder:
             entities.experience[0].company if entities.experience else None
         )
 
+        positions = [
+            CareerPosition(
+                job_title=ex.job_title,
+                company=ex.company,
+                employment_type=ex.employment_type,
+                location=ex.location,
+                start_date=ex.start_date,
+                end_date=ex.end_date,
+                is_current=ex.is_current,
+                duration_months=ex.duration_months,
+                description=ex.description,
+                technologies_used=ex.technologies_used
+            )
+            for ex in entities.experience
+        ]
+
         return CareerProfile(
             career_stage=self._compute_career_stage(total_months),
             current_role=current_role,
             most_recent_employer=most_recent_employer,
             total_months_experience=total_months,
             internship_months=internship_months,
-            positions=entities.experience
+            positions=positions
         )
 
     def _compute_career_stage(self, months: int) -> CareerStage:
@@ -108,12 +152,38 @@ class CandidateProfileBuilder:
             entities.education[0].institution if entities.education else None
         )
 
+        degrees = [
+            AcademicDegree(
+                degree=ed.degree,
+                field_of_study=ed.field_of_study,
+                institution=ed.institution,
+                start_year=ed.start_year,
+                graduation_year=ed.graduation_year,
+                cgpa=ed.cgpa,
+                percentage=ed.percentage,
+                is_current=ed.is_current
+            )
+            for ed in entities.education
+        ]
+
+        certifications = [
+            CandidateCertification(
+                name=c.name,
+                issuing_organization=c.issuing_organization,
+                issue_date=c.issue_date,
+                expiry_date=c.expiry_date,
+                credential_id=c.credential_id,
+                credential_url=c.credential_url
+            )
+            for c in entities.certifications
+        ]
+
         return EducationProfile(
             highest_qualification=self._compute_highest_qualification(entities),
             latest_institution=latest_institution,
             is_currently_studying=is_studying,
-            degrees=entities.education,
-            certifications=entities.certifications
+            degrees=degrees,
+            certifications=certifications
         )
 
     def _compute_highest_qualification(self, entities: ExtractedEntities) -> str | None:

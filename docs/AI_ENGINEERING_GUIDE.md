@@ -72,6 +72,12 @@ SpeakLift follows a strict engineering discipline: **always choose the lowest-co
 - LLMs are reserved for creative, generative tasks where they provide irreplaceable value.
 - This architecture demonstrates deep understanding of the entire AI engineering stack.
 
+### Business Layer Isolation & Deterministic Matching
+
+To ensure complete isolation between AI data extraction and the core business logic, SpeakLift enforces a strict **Translation Boundary** via Builder patterns (e.g., `CandidateProfileBuilder`, `JobProfileBuilder`). 
+- **AI DTO Removal**: AI extractions are never exposed directly to the matching engine. They are translated into pure, immutable business aggregates (like `CareerPosition`, `AcademicDegree`).
+- **Stateless Deterministic Matchers**: The matching layer operates exclusively on normalized, pure business facts. Subjective reasoning and AI abstractions do not enter the matching engine. Modules like `ExperienceMatcher` rely entirely on simple, predictable rules (e.g., integer-based matching).
+
 ---
 
 ## System Architecture Overview

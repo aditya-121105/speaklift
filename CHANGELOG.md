@@ -6,7 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- ExperienceMatcher
 - EducationMatcher
 - MatchResultBuilder
 - MatchingEngine
@@ -15,6 +14,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interview Planner
 - Question Selection
 - Answer Evaluation
+
+---
+
+## [0.5.9] - 2026-07-07
+
+### Added
+
+- ExperienceMatcher
+- ExperienceMatchResult
+- Business schemas (CareerPosition, AcademicDegree, CandidateCertification, CandidateProject)
+
+### Changed
+
+- CandidateProfile aggregate completely isolated from AI DTO leakage.
+- CandidateProfileBuilder strictly translates raw AI extractions to business models.
+- Business Layer hardened.
+
+### Architecture
+
+- Removed all imports of `app.ai.*` from the Business Layer.
+- Implemented deterministic `ExperienceMatcher` using pure integer-based comparison.
 
 ---
 

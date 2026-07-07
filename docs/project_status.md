@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 7, 2026 | Sprint C6.2 Completed: Skill Matcher
+> **Living Document** | Last Updated: July 7, 2026 | Sprint C6.3 Completed: Experience Matcher
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
