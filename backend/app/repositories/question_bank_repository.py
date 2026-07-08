@@ -2,7 +2,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from app.models.question_bank import QuestionBank
-from app.schemas.interview_engine.interview_objective import (
+from app.services.interview_planner.schemas.interview_objective import (
     InterviewObjective,
 )
 from app.shared.enums import (
@@ -11,7 +11,9 @@ from app.shared.enums import (
 )
 
 
-class QuestionBankRepository:
+from app.services.question_selection.repository import QuestionRepository
+
+class QuestionBankRepository(QuestionRepository):
 
     @staticmethod
     def create(
