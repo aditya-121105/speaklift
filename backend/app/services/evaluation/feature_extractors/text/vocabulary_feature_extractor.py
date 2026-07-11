@@ -48,9 +48,8 @@ class VocabularyFeatureExtractor:
     Extract vocabulary-related features from interview answers.
     """
 
-    @classmethod
     def extract(
-        cls,
+        self,
         documents: list[TextDocument],
     ) -> dict[str, float | int]:
         """

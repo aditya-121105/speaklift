@@ -5,23 +5,30 @@ from app.models.interview_answer import (
 )
 
 
-class InterviewAnswerRepository:
+from app.services.interview_execution.repository import ExecutionAnswerRepository
+
+from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
+
+class InterviewAnswerRepository(ExecutionAnswerRepository):
 
     @staticmethod
-    def create(
+    def persist_answer(
         db: Session,
-        answer: InterviewAnswer,
-    ) -> InterviewAnswer:
+        session_id: int,
+        question_id: int,
+        submitted_answer: SubmittedAnswer,
+    ) -> None:
 
         try:
+            answer = InterviewAnswer(
+                interview_session_id=session_id,
+                interview_question_id=question_id,
+                transcript=submitted_answer.transcript,
+                answer_source=submitted_answer.answer_source,
+                answer_duration_seconds=submitted_answer.answer_duration_seconds,
+            )
             db.add(answer)
-
             db.commit()
-
-            db.refresh(answer)
-
-            return answer
-
         except Exception:
             db.rollback()
             raise

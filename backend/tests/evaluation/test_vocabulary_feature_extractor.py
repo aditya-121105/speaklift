@@ -6,15 +6,18 @@ from app.services.evaluation.feature_extractors.text.vocabulary_feature_extracto
     VocabularyFeatureExtractor,
 )
 
+text_processor = TextProcessor()
+vocab_extractor = VocabularyFeatureExtractor()
+
 documents = [
-    TextProcessor.process(
+    text_processor.process(
         "I developed AI applications using Python and FastAPI."
     ),
-    TextProcessor.process(
+    text_processor.process(
         "I deployed Docker containers on AWS."
     ),
 ]
 
-features = VocabularyFeatureExtractor.extract(documents)
+features = vocab_extractor.extract(documents)
 
 print(features)

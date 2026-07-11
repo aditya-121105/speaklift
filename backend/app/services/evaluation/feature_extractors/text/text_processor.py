@@ -47,9 +47,8 @@ class TextProcessor:
     Converts raw interview text into a structured TextDocument.
     """
 
-    @classmethod
     def process(
-        cls,
+        self,
         text: str,
     ) -> TextDocument:
         """

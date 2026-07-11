@@ -27,8 +27,9 @@ def test_statistics_feature_extractor():
         "I enjoy solving machine learning problems.",
     ]
 
+    text_processor = TextProcessor()
     documents = [
-        TextProcessor.process(answer)
+        text_processor.process(answer)
         for answer in answers
     ]
 

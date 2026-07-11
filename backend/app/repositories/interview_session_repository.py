@@ -5,7 +5,9 @@ from app.models.interview_session import (
 )
 
 
-class InterviewSessionRepository:
+from app.services.interview_execution.repository import ExecutionSessionRepository
+
+class InterviewSessionRepository(ExecutionSessionRepository):
 
     @staticmethod
     def create(
@@ -78,7 +80,37 @@ class InterviewSessionRepository:
             interview_session: InterviewSession,
     ) -> InterviewSession:
         db.commit()
-
         db.refresh(interview_session)
-
         return interview_session
+
+    @staticmethod
+    def mark_in_progress(
+        db: Session,
+        session_id: int,
+    ) -> InterviewSession | None:
+        from datetime import datetime, timezone
+        from app.shared.enums import InterviewStatus
+        
+        session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+        if session:
+            session.status = InterviewStatus.IN_PROGRESS
+            session.started_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(session)
+        return session
+
+    @staticmethod
+    def mark_completed(
+        db: Session,
+        session_id: int,
+    ) -> InterviewSession | None:
+        from datetime import datetime, timezone
+        from app.shared.enums import InterviewStatus
+        
+        session = db.query(InterviewSession).filter(InterviewSession.id == session_id).first()
+        if session:
+            session.status = InterviewStatus.COMPLETED
+            session.completed_at = datetime.now(timezone.utc)
+            db.commit()
+            db.refresh(session)
+        return session

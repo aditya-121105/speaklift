@@ -1,0 +1,33 @@
+from typing import Protocol
+from sqlalchemy.orm import Session
+from app.models.interview_session import InterviewSession
+from app.models.interview_question import InterviewQuestion
+from app.models.interview_answer import InterviewAnswer
+
+class ExecutionSessionRepository(Protocol):
+    def get_by_id_and_user(self, db: Session, interview_session_id: int, user_id: int) -> InterviewSession | None:
+        ...
+    def save(self, db: Session, interview_session: InterviewSession) -> InterviewSession:
+        ...
+    def mark_in_progress(self, db: Session, session_id: int) -> InterviewSession | None:
+        ...
+    def mark_completed(self, db: Session, session_id: int) -> InterviewSession | None:
+        ...
+
+class ExecutionQuestionRepository(Protocol):
+    def create_many(self, db: Session, questions: list[InterviewQuestion]) -> list[InterviewQuestion]:
+        ...
+    def get_by_id(self, db: Session, question_id: int) -> InterviewQuestion | None:
+        ...
+    def get_first_unasked_question(self, db: Session, interview_session_id: int) -> InterviewQuestion | None:
+        ...
+    def save(self, db: Session, question: InterviewQuestion) -> InterviewQuestion:
+        ...
+    def mark_as_asked(self, db: Session, question_id: int) -> InterviewQuestion | None:
+        ...
+
+from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
+
+class ExecutionAnswerRepository(Protocol):
+    def persist_answer(self, db: Session, session_id: int, question_id: int, submitted_answer: SubmittedAnswer) -> None:
+        ...

@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, JsonValue
 
 
 # ---------------------------------------------------------------------------
@@ -37,8 +37,11 @@ SimilarityScore = float
 #: A dense embedding vector (list of floats produced by a sentence transformer).
 EmbeddingVector = list[float]
 
+#: A JSON-serializable value (string, number, boolean, None, or nested lists/dicts of these).
+JSONValue = JsonValue
+
 #: Provider-agnostic key-value metadata attached to AI artefacts.
-AIMetadata = dict[str, Any]
+AIMetadata = dict[str, JSONValue]
 
 
 # ---------------------------------------------------------------------------

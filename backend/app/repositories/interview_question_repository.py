@@ -5,7 +5,9 @@ from app.models.interview_question import (
 )
 
 
-class InterviewQuestionRepository:
+from app.services.interview_execution.repository import ExecutionQuestionRepository
+
+class InterviewQuestionRepository(ExecutionQuestionRepository):
 
     @staticmethod
     def create(
@@ -94,8 +96,18 @@ class InterviewQuestionRepository:
             question: InterviewQuestion,
     ) -> InterviewQuestion:
         db.commit()
-
         db.refresh(question)
+        return question
 
+    @staticmethod
+    def mark_as_asked(
+        db: Session,
+        question_id: int,
+    ) -> InterviewQuestion | None:
+        question = db.query(InterviewQuestion).filter(InterviewQuestion.id == question_id).first()
+        if question:
+            question.is_asked = True
+            db.commit()
+            db.refresh(question)
         return question
 

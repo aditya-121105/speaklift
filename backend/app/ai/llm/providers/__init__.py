@@ -33,6 +33,7 @@ from abc import ABC, abstractmethod
 from typing import AsyncIterator, Iterator
 
 from app.ai.shared.types import AIMetadata
+from app.ai.llm.prompts.base import Prompt
 
 
 class LLMResponse:
@@ -107,11 +108,10 @@ class LLMProvider(ABC):
     @abstractmethod
     def complete(
         self,
-        prompt: str,
+        prompt: Prompt,
         *,
         max_tokens: int | None = None,
         temperature: float | None = None,
-        system_prompt: str | None = None,
         json_mode: bool = False,
     ) -> LLMResponse:
         """
@@ -119,13 +119,11 @@ class LLMProvider(ABC):
 
         Parameters
         ----------
-        prompt        : The user-facing prompt string.
+        prompt        : The immutable Prompt business artifact.
         max_tokens    : Maximum number of tokens to generate.
                         Defaults to the provider's configured limit.
         temperature   : Sampling temperature in [0.0, 2.0].
                         Defaults to the provider's configured temperature.
-        system_prompt : Optional system/instruction prefix.
-                        If None, the provider's default system prompt applies.
         json_mode     : If True, instruct the model to return valid JSON.
                         Only valid if self.supports_json_mode is True.
 
@@ -145,21 +143,19 @@ class LLMProvider(ABC):
     @abstractmethod
     def stream(
         self,
-        prompt: str,
+        prompt: Prompt,
         *,
         max_tokens: int | None = None,
         temperature: float | None = None,
-        system_prompt: str | None = None,
     ) -> Iterator[str]:
         """
         Send a prompt and yield response tokens as they arrive (streaming).
 
         Parameters
         ----------
-        prompt        : The user-facing prompt string.
+        prompt        : The immutable Prompt business artifact.
         max_tokens    : Maximum number of tokens to generate.
         temperature   : Sampling temperature in [0.0, 2.0].
-        system_prompt : Optional system/instruction prefix.
 
         Yields
         ------
@@ -180,11 +176,10 @@ class LLMProvider(ABC):
     @abstractmethod
     async def acomplete(
         self,
-        prompt: str,
+        prompt: Prompt,
         *,
         max_tokens: int | None = None,
         temperature: float | None = None,
-        system_prompt: str | None = None,
         json_mode: bool = False,
     ) -> LLMResponse:
         """
@@ -198,11 +193,10 @@ class LLMProvider(ABC):
     @abstractmethod
     async def astream(
         self,
-        prompt: str,
+        prompt: Prompt,
         *,
         max_tokens: int | None = None,
         temperature: float | None = None,
-        system_prompt: str | None = None,
     ) -> AsyncIterator[str]:
         """
         Async streaming variant. Yields text chunks asynchronously.

@@ -24,6 +24,26 @@ class Settings(BaseSettings):
     # Maximum allowed resume file size in megabytes.
     MAX_RESUME_SIZE_MB: int = 10
 
+    # ---------------------------------------------------------------------------
+    # LLM Infrastructure Configuration
+    # ---------------------------------------------------------------------------
+    # General LLM defaults
+    LLM_DEFAULT_PROVIDER: str = "ollama"
+    LLM_DEFAULT_MODEL: str = "llama3.1:8b"
+    LLM_REQUEST_TIMEOUT: int = 60
+    LLM_RETRY_COUNT: int = 3
+    LLM_TEMPERATURE: float = 0.7
+    LLM_MAX_OUTPUT_TOKENS: int = 2048
+    LLM_ROUTING_STRATEGY: str = "prefer_local"  # prefer_local, prefer_cloud, local_only, cloud_only
+
+    # Gemini specific
+    GEMINI_API_KEY: str | None = None
+    GEMINI_DEFAULT_MODEL: str = "gemini-1.5-flash"
+
+    # Ollama specific
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_DEFAULT_MODEL: str = "llama3.1:8b"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
