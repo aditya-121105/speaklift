@@ -37,8 +37,9 @@ class Settings(BaseSettings):
     LLM_ROUTING_STRATEGY: str = "prefer_local"  # prefer_local, prefer_cloud, local_only, cloud_only
 
     # Gemini specific
+    # Gemini specific
     GEMINI_API_KEY: str | None = None
-    GEMINI_DEFAULT_MODEL: str = "gemini-1.5-flash"
+    GEMINI_DEFAULT_MODEL: str = "gemini-3.5-flash"
 
     # Ollama specific
     OLLAMA_BASE_URL: str = "http://localhost:11434"

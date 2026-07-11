@@ -30,7 +30,10 @@ def simple_prompt():
 
 def test_live_complete(provider, simple_prompt):
     # Tests a real synchronous complete call
-    response = provider.complete(simple_prompt, max_tokens=20, temperature=0.0)
+    try:
+        response = provider.complete(simple_prompt, max_tokens=256, temperature=0.0)
+    except LLMRateLimitError:
+        pytest.skip("Gemini API quota exhausted (429). Skipping test.")
     
     assert response is not None
     assert "Hello Integration Test" in response.text
@@ -40,7 +43,10 @@ def test_live_complete(provider, simple_prompt):
 
 def test_live_stream(provider, simple_prompt):
     # Tests a real synchronous streaming call
-    chunks = list(provider.stream(simple_prompt, max_tokens=20, temperature=0.0))
+    try:
+        chunks = list(provider.stream(simple_prompt, max_tokens=256, temperature=0.0))
+    except LLMRateLimitError:
+        pytest.skip("Gemini API quota exhausted (429). Skipping test.")
     
     assert len(chunks) > 0
     full_text = "".join(chunks)
@@ -48,7 +54,10 @@ def test_live_stream(provider, simple_prompt):
 
 def test_live_acomplete(provider, simple_prompt):
     # Tests a real asynchronous complete call
-    response = asyncio.run(provider.acomplete(simple_prompt, max_tokens=20, temperature=0.0))
+    try:
+        response = asyncio.run(provider.acomplete(simple_prompt, max_tokens=256, temperature=0.0))
+    except LLMRateLimitError:
+        pytest.skip("Gemini API quota exhausted (429). Skipping test.")
     
     assert response is not None
     assert "Hello Integration Test" in response.text
@@ -57,11 +66,14 @@ def test_live_astream(provider, simple_prompt):
     # Tests a real asynchronous streaming call
     async def run_stream():
         chunks = []
-        async for chunk in provider.astream(simple_prompt, max_tokens=20, temperature=0.0):
+        async for chunk in provider.astream(simple_prompt, max_tokens=256, temperature=0.0):
             chunks.append(chunk)
         return chunks
         
-    chunks = asyncio.run(run_stream())
+    try:
+        chunks = asyncio.run(run_stream())
+    except LLMRateLimitError:
+        pytest.skip("Gemini API quota exhausted (429). Skipping test.")
     assert len(chunks) > 0
     full_text = "".join(chunks)
     assert "Hello Integration Test" in full_text
@@ -74,7 +86,10 @@ def test_live_json_mode(provider):
         user_prompt="Output {\"status\": \"ok\"}"
     )
     
-    response = provider.complete(json_prompt, json_mode=True, temperature=0.0, max_tokens=20)
+    try:
+        response = provider.complete(json_prompt, json_mode=True, temperature=0.0, max_tokens=256)
+    except LLMRateLimitError:
+        pytest.skip("Gemini API quota exhausted (429). Skipping test.")
     
     # Verify the JSON response
     import json

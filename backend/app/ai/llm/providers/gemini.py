@@ -98,7 +98,7 @@ class GeminiProvider(LLMProvider):
         final_sys, final_user, final_temp, final_tokens = self._prepare_request(
             prompt, temperature, max_tokens
         )
-        return self._execute_stream(final_sys, final_user, final_temp, final_tokens)
+        yield from self._execute_stream(final_sys, final_user, final_temp, final_tokens)
 
     async def acomplete(
         self,
@@ -123,7 +123,8 @@ class GeminiProvider(LLMProvider):
         final_sys, final_user, final_temp, final_tokens = self._prepare_request(
             prompt, temperature, max_tokens
         )
-        return self._execute_astream(final_sys, final_user, final_temp, final_tokens)
+        async for chunk in self._execute_astream(final_sys, final_user, final_temp, final_tokens):
+            yield chunk
 
     # ------------------------------------------------------------------
     # Isolated Execution Boundaries
@@ -162,11 +163,18 @@ class GeminiProvider(LLMProvider):
             )
             
             usage = response.usage_metadata
-            input_tokens = usage.prompt_token_count if usage else 0
-            output_tokens = usage.candidates_token_count if usage else 0
+            input_tokens = (usage.prompt_token_count or 0) if usage else 0
+            output_tokens = (usage.candidates_token_count or 0) if usage else 0
+            
+            text = response.text or ""
+            if not text.strip():
+                finish_reason = "UNKNOWN"
+                if hasattr(response, "candidates") and response.candidates:
+                    finish_reason = getattr(response.candidates[0], "finish_reason", "UNKNOWN")
+                raise LLMProviderError(f"Gemini API returned empty response. Finish reason: {finish_reason}")
             
             return LLMResponse(
-                text=response.text or "",
+                text=text,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 model=self.model_name,
@@ -205,11 +213,18 @@ class GeminiProvider(LLMProvider):
             )
             
             usage = response.usage_metadata
-            input_tokens = usage.prompt_token_count if usage else 0
-            output_tokens = usage.candidates_token_count if usage else 0
+            input_tokens = (usage.prompt_token_count or 0) if usage else 0
+            output_tokens = (usage.candidates_token_count or 0) if usage else 0
+            
+            text = response.text or ""
+            if not text.strip():
+                finish_reason = "UNKNOWN"
+                if hasattr(response, "candidates") and response.candidates:
+                    finish_reason = getattr(response.candidates[0], "finish_reason", "UNKNOWN")
+                raise LLMProviderError(f"Gemini API returned empty response. Finish reason: {finish_reason}")
             
             return LLMResponse(
-                text=response.text or "",
+                text=text,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
                 model=self.model_name,
