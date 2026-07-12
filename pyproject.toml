@@ -9,8 +9,10 @@ dependencies = [
     "bcrypt==3.2.2",
     "email-validator>=2.3.0",
     "fastapi>=0.137.1",
+    "google-genai>=2.11.0",
     "language-tool-python>=3.4.0",
     "nltk>=3.9.4",
+    "ollama>=0.6.2",
     "passlib[bcrypt]>=1.7.4",
     "pdfplumber>=0.11.10",
     "psycopg[binary]>=3.3.4",
@@ -35,3 +37,6 @@ dev = [
 # Add backend/ to sys.path so that `import app.*` resolves correctly.
 pythonpath = ["backend"]
 testpaths = ["backend/tests"]
+markers = [
+    "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+]

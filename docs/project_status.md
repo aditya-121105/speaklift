@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 7, 2026 | Sprint C6.3 Completed: Experience Matcher
+> **Living Document** | Last Updated: July 8, 2026 | Sprint C7 Completed: Interview Context, Planner, and Selection
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
@@ -161,7 +161,26 @@ app/
 - `nlp/` — Processors, extractors, schemas, resource managers (skeletons)
 - `ml/` — Models, inference, training, preprocessing (skeletons)
 - `embeddings/` — `EmbeddingProvider` ABC, vectorizers, service skeleton
-- `llm/` — `LLMProvider` ABC (with `LLMResponse`), prompts, routers, service (skeletons)
+- `llm/` — `LLMProvider` ABC (with `LLMResponse`), prompts, routers, service (COMPLETED & FROZEN - Sprint C9.2). Includes:
+  - **Prompt Infrastructure**: Versioned, immutable prompt aggregates.
+  - **Providers**: `GeminiProvider` (Cloud), `OllamaProvider` (Local).
+  - **LLMRouter**: Configuration-driven multi-provider routing and resilient stream locking.
+  - **LLMService**: Centralized AI orchestration (JSON generation parsing, etc.).
+  - **Dependency Injection Factory**: Wiring orchestration in `factory.py`.
+  - **Configuration System**: Environment-driven fallback logic and quota strategies.
+  - **Smoke Test & Integration Tests**: Verified via `smoke_test_ai.py` and robust pytest suite with rate-limit evasion.
+  - **Production Hardening**: Deterministic API quotas, failover mechanisms, and empty-payload handling.
+
+**Final AI Architecture Flow**:
+```text
+Business
+↓
+LLMService
+↓
+LLMRouter
+↓
+Gemini / Ollama
+```
 - `evaluation/` — Skeleton (Sprint C.5)
 - `recommendations/` — Skeleton (Sprint C.6)
 - `ranking/` — Skeleton (Sprint C.4)
@@ -1857,17 +1876,51 @@ Parsing Completed
 
 ---
 
-## Next Sprint
+## Sprint C6.3 — Experience Matcher
 
-### Sprint C6.x
-Resume ↔ Job Matching Engine (Continuing)
+### Completed
+*   ExperienceMatcher implemented.
+*   ExperienceMatchResult implemented.
+*   Deterministic deficit, surplus, and boundary checks (minimum/maximum experience) applied.
 
-*   ExperienceMatcher
-*   EducationMatcher
-*   MatchResultBuilder
-*   MatchingEngine
-*   Matching Integration
+## Sprint C6.4 — Education Matcher
+
+### Completed
+*   EducationMatcher implemented.
+*   EducationMatchResult implemented.
+*   Deterministic hierarchy evaluation for qualifications (e.g. Master > Bachelor).
+
+## Sprint C6.5 & C6.6 — MatchResultBuilder & MatchingEngine
+
+### Completed
+*   MatchResultBuilder implemented for stateless aggregation of matcher statistics and outputs.
+*   MatchResult immutable schema introduced as final output.
+*   MatchingEngine orchestrator implemented using dependency injection.
+*   Sprint C6 officially concluded.
+
+### Architectural Decisions
+*   The MatchingEngine acts purely as an orchestrator. It executes zero business logic.
+*   The MatchResultBuilder cleanly aggregates `MatchStatistics` across all matchers without deduplicating code.
+*   Total AI isolation confirmed. No `app.ai` imports exist in the Matching package.
+*   All tests (210) passing successfully.
 
 ---
 
-*End of SpeakLift Project Status Document — July 6, 2026*
+## Sprint C7 — Interview Context, Planner, and Selection
+
+### Completed
+✓ Interview Context
+✓ Interview Planner
+✓ Question Selection
+✓ Repository abstraction hardening
+
+---
+
+## Next Sprint
+
+### Sprint C8 — Interview Execution
+*   (Not Started)
+
+---
+
+*End of SpeakLift Project Status Document — July 8, 2026*

@@ -76,7 +76,56 @@ SpeakLift follows a strict engineering discipline: **always choose the lowest-co
 
 To ensure complete isolation between AI data extraction and the core business logic, SpeakLift enforces a strict **Translation Boundary** via Builder patterns (e.g., `CandidateProfileBuilder`, `JobProfileBuilder`). 
 - **AI DTO Removal**: AI extractions are never exposed directly to the matching engine. They are translated into pure, immutable business aggregates (like `CareerPosition`, `AcademicDegree`).
-- **Stateless Deterministic Matchers**: The matching layer operates exclusively on normalized, pure business facts. Subjective reasoning and AI abstractions do not enter the matching engine. Modules like `ExperienceMatcher` rely entirely on simple, predictable rules (e.g., integer-based matching).
+- **Stateless Deterministic Matchers**: The matching layer operates exclusively on normalized, pure business facts. Subjective reasoning and AI abstractions do not enter the matching engine. The `SkillMatcher`, `ExperienceMatcher`, and `EducationMatcher` rely entirely on simple, predictable rules (e.g., integer-based months matching, exact string field matching).
+- **MatchStatistics**: All matchers produce a shared, reusable `MatchStatistics` schema to natively track requirements versus candidate satisfaction across domains.
+- **MatchResultBuilder**: Aggregates the deterministic outputs and statistics from individual matchers entirely statelessly, ensuring no business reasoning happens at the aggregation step.
+- **MatchingEngine Orchestration**: The top-level `MatchingEngine` operates via strict Dependency Injection, consuming the matchers and builder to yield one single, immutable `MatchResult`. It is a pure orchestration layer devoid of ML or NLP processing.
+
+### Architectural Design Patterns
+
+#### Immutable Business Pipeline Pattern
+SpeakLift strictly enforces an immutable pipeline for processing data through the system:
+```text
+External Representation
+        ↓
+Translation Boundary
+        ↓
+Immutable Business Aggregate
+        ↓
+Deterministic Business Service
+        ↓
+Immutable Business Aggregate
+        ↓
+Next Subsystem
+```
+
+#### Builder Pattern
+Consistent translation boundaries are implemented using builders to isolate domains:
+- `CandidateProfileBuilder`
+- `JobProfileBuilder`
+- `MatchResultBuilder`
+- `InterviewContextBuilder`
+
+#### Planner & Selector Patterns
+- **Planner Pattern:** `InterviewPlanner` deterministically translates an `InterviewContext` into an `InterviewPlan`.
+- **Selector Pattern:** `QuestionSelector` deterministically translates an `InterviewPlan` into a `QuestionSelection`.
+
+#### Business Layer Isolation
+We reinforce strict architectural boundaries across the system:
+- **No AI DTO leakage:** AI extractions must be mapped to business models.
+- **No SQLAlchemy ORM leakage:** Database models must never enter the business layer.
+- **No FastAPI model leakage:** HTTP request/response schemas are bounded to the API layer.
+- **No mutable objects:** Infrastructure or stateful objects must not reside inside business aggregates.
+
+#### Repository Pattern (Dependency Inversion)
+To satisfy the Dependency Inversion Principle, business services must never depend directly on concrete repositories:
+```text
+Business Services
+        ↓
+Repository Interface / Protocol
+        ↓
+Infrastructure Repository
+```
 
 ---
 

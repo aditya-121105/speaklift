@@ -6,14 +6,75 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-- EducationMatcher
-- MatchResultBuilder
-- MatchingEngine
-- Matching Integration
+
+### Added
+
+- Sprint C9.2 completed (AI Infrastructure) with historical record from C9.2.1 to C9.2.8.2.
+- **C9.2.1/C9.2.2**: `Prompt` immutable domain aggregates enforcing type-safe inputs and prompt versioning.
+- **C9.2.3**: `GeminiProvider` implementation using the official `google-genai` SDK and Provider abstraction layer hardening.
+- **C9.2.4**: `OllamaProvider` for local, cost-free inference.
+- **C9.2.5**: `LLMRouter` for configuration-driven routing and failover (`prefer_local`, `prefer_cloud`).
+- **C9.2.6/C9.2.7**: `LLMService` centralized AI orchestration and Dependency Injection Factory mapping.
+- **C9.2.8**: `AI_PROVIDER_SETUP.md` documentation, `smoke_test_ai.py` toolkit, production stream hardening, and AI test suite rate limit handling.
+- **C9.2.9**: AI Infrastructure Documentation freeze.
 - Interview Context Builder
-- Interview Planner
-- Question Selection
-- Answer Evaluation
+- LLM Provider Layer Integration
+- Front-End UI
+
+### Architecture
+
+- **Sprint C9.2 completed**: AI Infrastructure
+- The AI Infrastructure (Prompt, Provider, Router, Service, DI Factory) is fully hardened, documented, and frozen.
+
+---
+
+## [0.7.0] - 2026-07-08
+
+### Added
+
+- `InterviewContext` immutable business aggregate and `InterviewConfiguration`.
+- `InterviewContextBuilder` for strict isolation from persistence.
+- `InterviewPlanner` domain implementing deterministic sequence planning.
+- `InterviewPlan`, `InterviewPhase`, and `InterviewObjective` immutable schemas.
+- `QuestionSelector` domain providing deterministic, state-free extraction.
+- `QuestionSelection` and `SelectedQuestion` immutable aggregates.
+- `QuestionRepository` domain-level protocol abstraction.
+
+### Changed
+
+- Adopted formal Dependency Injection within `QuestionSelector`.
+- Hardened Repository Pattern by isolating business logic from concrete `QuestionBankRepository`.
+
+### Removed
+
+- Obsolete legacy `interview_engine` planner and question selector implementations.
+
+### Architecture
+
+- Hardened Business Layer against ORM leakage.
+- Sprint C7 completed: The Interview Context, Planning, and Selection domains are fully operational.
+
+---
+
+## [0.6.0] - 2026-07-07
+
+### Added
+
+- `EducationMatcher` for deterministic minimum degree and specific degree checks.
+- `EducationMatchResult` immutable schema.
+- `MatchResultBuilder` for stateless aggregation of matching outputs.
+- `MatchResult` final unified business aggregate.
+- `MatchingEngine` to fully orchestrate the deterministic matching subsystem.
+
+### Changed
+
+- Sprint C6 completed. The deterministic Matching Engine is fully functional.
+
+### Architecture
+
+- `MatchingEngine` utilizes pure dependency injection for all underlying matchers and builders.
+- `MatchResultBuilder` aggregates `MatchStatistics` across all matchers purely statelessly.
+- Enforced zero `app.ai` imports inside the `matching` package.
 
 ---
 

@@ -30,12 +30,21 @@ Planning & Architecture Phase
 ```text
 frontend/         Frontend application
 backend/          Backend APIs
-ai-services/      AI and ML services
 infrastructure/   Cloud and deployment resources
 docs/             Architecture and documentation
 tests/            Test suites
 scripts/          Utility scripts
 ```
+
+## AI Architecture
+
+SpeakLift implements a provider-agnostic AI layer supporting both cloud and local inference:
+- **Provider-agnostic AI layer**: The business layer communicates via a unified `LLMService`.
+- **Gemini**: Supported cloud provider for robust inference.
+- **Ollama**: Supported local provider for cost-free, private development.
+- **Router**: Automatic configuration-driven failover between cloud and local models.
+- **Local-first development**: We encourage local development using Ollama (Qwen 3).
+- **Cloud fallback**: Automatic fallback to Gemini based on routing strategy.
 
 ## Goals
 
