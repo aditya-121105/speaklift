@@ -20,17 +20,24 @@ from app.services.interview_execution.schemas.interview_execution_state import (
     CurrentQuestion
 )
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
+from app.services.question_selection.schemas.question_selection import SelectedQuestion
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.services.evaluation.evaluation_service import InterviewEvaluationService
 
 class InterviewExecutionService:
     def __init__(
         self,
         session_repo: ExecutionSessionRepository,
         question_repo: ExecutionQuestionRepository,
-        answer_repo: ExecutionAnswerRepository
+        answer_repo: ExecutionAnswerRepository,
+        evaluation_service: 'InterviewEvaluationService | None' = None
     ):
         self._session_repo = session_repo
         self._question_repo = question_repo
         self._answer_repo = answer_repo
+        self._evaluation_service = evaluation_service
         
     def start_interview(
         self, 
@@ -100,7 +107,17 @@ class InterviewExecutionService:
         if not next_q:
             session = self._session_repo.mark_completed(db, session_id)
             
+            # Trigger evaluation if service is configured
+            if self._evaluation_service:
+                self._trigger_evaluation(db, session_id)
+                
         return self._build_state(session, next_q)
+
+    def _trigger_evaluation(self, db: Session, session_id: int) -> None:
+        questions = self._question_repo.get_by_session(db, session_id)
+        answers = self._answer_repo.get_by_session(db, session_id)
+        
+        self._evaluation_service.evaluate_session(db, session_id, questions, answers)
         
     def _build_state(self, session: InterviewSession, question: InterviewQuestion | None) -> InterviewExecutionState:
         cq = None
