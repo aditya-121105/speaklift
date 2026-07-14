@@ -13,8 +13,16 @@ from app.models.user import User
 from app.schemas.job_description import JobDescriptionListResponse, JobDescriptionResponse
 from app.services.job_description_service import JobDescriptionService
 
-from app.dependencies.ai import get_document_extractor
+from app.dependencies.ai import (
+    get_document_extractor,
+    get_jd_nlp_pipeline,
+    get_jd_entity_validator,
+    get_job_profile_builder,
+)
 from app.ai.document_processing.services import DocumentExtractionService
+from app.ai.nlp.pipeline import NLPPipeline
+from app.ai.nlp.validators.entity_validator import EntityValidator
+from app.services.job_profile.builder import JobProfileBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +43,9 @@ async def upload_job_description(
     current_user: User = Depends(get_current_user),
     storage: StorageBackend = Depends(get_storage),
     document_extractor: DocumentExtractionService = Depends(get_document_extractor),
+    nlp_pipeline: NLPPipeline = Depends(get_jd_nlp_pipeline),
+    entity_validator: EntityValidator = Depends(get_jd_entity_validator),
+    profile_builder: JobProfileBuilder = Depends(get_job_profile_builder),
 ) -> JobDescriptionResponse:
     file_data = await file.read()
 
@@ -46,6 +57,9 @@ async def upload_job_description(
         file_data=file_data,
         storage=storage,
         document_extractor=document_extractor,
+        nlp_pipeline=nlp_pipeline,
+        entity_validator=entity_validator,
+        profile_builder=profile_builder,
     )
 
     return JobDescriptionResponse.model_validate(jd)

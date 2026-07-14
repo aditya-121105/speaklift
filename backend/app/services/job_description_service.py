@@ -17,6 +17,9 @@ from app.shared.exceptions import (
 )
 
 from app.ai.document_processing.services import DocumentExtractionService
+from app.ai.nlp.pipeline import NLPPipeline
+from app.ai.nlp.validators.entity_validator import EntityValidator
+from app.services.job_profile.builder import JobProfileBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +54,9 @@ class JobDescriptionService:
         file_data: bytes,
         storage: StorageBackend,
         document_extractor: DocumentExtractionService,
+        nlp_pipeline: NLPPipeline,
+        entity_validator: EntityValidator,
+        profile_builder: JobProfileBuilder,
     ) -> JobDescription:
         mime = (content_type or "").lower().strip()
         if mime not in ACCEPTED_MIME_TYPES:
@@ -90,7 +96,13 @@ class JobDescriptionService:
 
         try:
             doc_content = document_extractor.extract(file_data, job_description.original_filename, mime)
-            # Stop after DocumentContent extraction for now
+            extracted_entities = nlp_pipeline.run(doc_content)
+            validated_entities = entity_validator.validate_entities(extracted_entities)
+            job_profile = profile_builder.build(validated_entities)
+            
+            # Persist AI Profile
+            job_description.job_profile_data = job_profile.model_dump(mode="json")
+            
             job_description.parsing_status = ParsingStatus.COMPLETED
             job_description.parsed_at = datetime.now(timezone.utc)
             db.commit()

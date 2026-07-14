@@ -208,7 +208,8 @@ class ResumeService:
             validated_entities = entity_validator.validate_entities(extracted_entities)
             candidate_profile = profile_builder.build(validated_entities)
             
-            # Profile persistence is out of scope for this sprint.
+            # Persist AI Profile
+            resume.candidate_profile_data = candidate_profile.model_dump(mode="json")
             
             resume.parsing_status = ParsingStatus.COMPLETED
             resume.parsed_at = datetime.now(timezone.utc)
