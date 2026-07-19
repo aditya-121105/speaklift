@@ -28,7 +28,7 @@ def test_schema_immutability():
     with pytest.raises(ValidationError):
         salary.minimum = 200
 
-    skill = JDSkillRecord(name="Python", requirement_tier=RequirementTier.REQUIRED, confidence=1.0)
+    skill = JDSkillRecord(name="Python", normalized_name="Python", requirement_tier=RequirementTier.REQUIRED, confidence=1.0)
     with pytest.raises(ValidationError):
         skill.name = "Java"
 

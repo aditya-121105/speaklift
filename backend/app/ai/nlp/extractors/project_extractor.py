@@ -23,7 +23,7 @@ class ProjectExtractor(EntityExtractor):
 
     def extract(self, context: ProcessingContext) -> list[ProjectRecord]:
         projects = []
-        project_sections = self._find_project_sections(context.document.raw_text)
+        project_sections = self._find_project_sections(context)
 
         for text in project_sections:
             record = self._parse_project(text)
@@ -32,47 +32,19 @@ class ProjectExtractor(EntityExtractor):
 
         return projects
 
-    def _find_project_sections(self, text: str) -> list[str]:
-        # Identify the projects section
-        # We look for a "Projects" heading and extract until the next heading
-        lines = text.split('\n')
+    def _find_project_sections(self, context: ProcessingContext) -> list[str]:
         sections = []
-        in_projects = False
-        current_section = []
-        
-        heading_pattern = re.compile(r'^(?:[A-Z][a-z]+(?:[ \t]+[A-Z][a-z&]+)*)[ \t]*(?:\:|\s*-)?\s*$')
-
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                if current_section:
-                    current_section.append(line)
-                continue
+        if 'projects' in context.document.sections:
+            sections.append(context.document.sections['projects'].content)
             
-            # Check if it's a heading
-            if len(stripped) < 40 and (stripped.isupper() or heading_pattern.match(stripped)):
-                if re.search(r'\b(projects?|personal projects?|academic projects?)\b', stripped, re.IGNORECASE):
-                    in_projects = True
-                    current_section = []
-                    continue
-                elif in_projects:
-                    # Hit a new heading
-                    if re.search(r'\b(education|experience|skills|certifications|summary|contact|profile|work|employment|licenses?|languages)\b', stripped, re.IGNORECASE):
-                        if current_section:
-                            sections.append('\n'.join(current_section).strip())
-                            current_section = []
-                        in_projects = False
-            
-            if in_projects:
-                current_section.append(line)
-                
-        if current_section:
-            sections.append('\n'.join(current_section).strip())
+        if not sections:
+            return []
 
         # If we found a block, try to split it into individual projects
         project_texts = []
         for section in sections:
-            # Fallback splitting by double newline
+            # Better splitting: look for dates or bolded headers
+            # Fallback splitting by double newline or bullet lists
             parts = re.split(r'\n\s*\n', section)
             for part in parts:
                 if part.strip():
@@ -90,10 +62,10 @@ class ProjectExtractor(EntityExtractor):
             
         start_date, end_date = self._extract_dates(text)
         technologies = self._extract_technologies(text)
-        description = self._extract_description(text, name)
+        summary, achievements = self._extract_description(text, name)
         
         confidence = 0.5
-        if description: confidence += 0.2
+        if summary: confidence += 0.2
         if technologies: confidence += 0.2
         if start_date: confidence += 0.1
         
@@ -101,7 +73,9 @@ class ProjectExtractor(EntityExtractor):
         
         return ProjectRecord(
             name=name,
-            description=description,
+            summary=summary,
+            achievements=achievements,
+            description=summary,
             technologies=technologies,
             skills=technologies,  # We populate skills with the same list as technologies based on schema
             start_date=start_date,
@@ -165,9 +139,10 @@ class ProjectExtractor(EntityExtractor):
                 
         return sorted(list(techs))
 
-    def _extract_description(self, text: str, name: str) -> str | None:
+    def _extract_description(self, text: str, name: str) -> tuple[str | None, list[str]]:
         lines = text.split('\n')
-        desc_lines = []
+        summary_lines = []
+        achievements = []
         name_found = False
         
         for line in lines:
@@ -179,12 +154,13 @@ class ProjectExtractor(EntityExtractor):
                 name_found = True
                 # The line might contain name + description
                 desc_part = re.sub(r'^.*?[-|–:]\s*', '', line_str, count=1)
-                if desc_part and desc_part.lower() != name.lower():
-                    desc_lines.append(desc_part)
+                if desc_part and desc_part.lower() != name.lower() and len(desc_part) > 10:
+                    summary_lines.append(desc_part)
             else:
-                desc_lines.append(line_str)
+                if re.match(r'^[-•*]', line_str):
+                    achievements.append(re.sub(r'^[-•*]\s*', '', line_str))
+                elif line_str.lower() not in ('technologies:', 'skills:', 'tools:'):
+                    summary_lines.append(line_str)
                 
-        if not desc_lines:
-            return None
-            
-        return ' '.join(desc_lines)
+        summary = ' '.join(summary_lines).strip() if summary_lines else None
+        return summary, achievements

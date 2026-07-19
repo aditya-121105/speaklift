@@ -16,5 +16,6 @@ class JDSkillRecord(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     name: str
+    normalized_name: str
     requirement_tier: RequirementTier
     confidence: float

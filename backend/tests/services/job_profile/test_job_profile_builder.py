@@ -25,10 +25,10 @@ def test_job_profile_builder():
             confidence=1.0
         ),
         skills=[
-            JDSkillRecord(name="Python", requirement_tier=RequirementTier.REQUIRED, confidence=1.0),
-            JDSkillRecord(name="React", requirement_tier=RequirementTier.PREFERRED, confidence=1.0),
-            JDSkillRecord(name="AWS", requirement_tier=RequirementTier.OPTIONAL, confidence=1.0),
-            JDSkillRecord(name="Unknown", requirement_tier=RequirementTier.UNKNOWN, confidence=1.0),
+            JDSkillRecord(name="Python", normalized_name="python", requirement_tier=RequirementTier.REQUIRED, confidence=1.0),
+            JDSkillRecord(name="React", normalized_name="react", requirement_tier=RequirementTier.PREFERRED, confidence=1.0),
+            JDSkillRecord(name="AWS", normalized_name="aws", requirement_tier=RequirementTier.OPTIONAL, confidence=1.0),
+            JDSkillRecord(name="Unknown", normalized_name="unknown", requirement_tier=RequirementTier.UNKNOWN, confidence=1.0),
         ],
         experience=[
             JDExperienceRecord(min_years=3, max_years=5, domain="Backend", confidence=1.0)
@@ -149,7 +149,7 @@ def test_builder_taxonomy_fallback():
     entities = ExtractedJDEntities(
         employment=JDEmploymentRecord(job_title=None, location=None, remote_type=None, employment_type=None, salary=None, confidence=0.0),
         skills=[
-            JDSkillRecord(name="SuperSecretTech9000", requirement_tier=RequirementTier.REQUIRED, confidence=1.0)
+            JDSkillRecord(name="SuperSecretTech9000", normalized_name="supersecrettech9000", requirement_tier=RequirementTier.REQUIRED, confidence=1.0)
         ],
         experience=[],
         education=[],

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectRecord(BaseModel):
@@ -7,6 +7,8 @@ class ProjectRecord(BaseModel):
 
     name: str | None
     description: str | None
+    summary: str | None = None
+    achievements: list[str] = Field(default_factory=list)
     technologies: list[str]  # populated with normalized_names
     skills: list[str]
     start_date: str | None = None

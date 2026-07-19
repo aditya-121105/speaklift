@@ -1,5 +1,4 @@
 import re
-from typing import Any
 from app.ai.nlp.extractors.base import EntityExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.contact_schema import ContactInfo
@@ -53,11 +52,11 @@ class ContactExtractor(EntityExtractor):
             all_urls.append(cleaned_url)
 
         platform_patterns = [
-            r"\blinkedin\.com/in/[^\s()<>]+",
-            r"\bgithub\.com/[^\s()<>]+",
-            r"\bkaggle\.com/[^\s()<>]+",
-            r"\bleetcode\.com/[^\s()<>]+",
-            r"\bhackerrank\.com/[^\s()<>]+"
+            r"\b(?:https?://)?(?:www\.)?linkedin\.com/(?:in/)?[^\s()<>]+",
+            r"\b(?:https?://)?(?:www\.)?github\.com/[^\s()<>]+",
+            r"\b(?:https?://)?(?:www\.)?kaggle\.com/[^\s()<>]+",
+            r"\b(?:https?://)?(?:www\.)?leetcode\.com/[^\s()<>]+",
+            r"\b(?:https?://)?(?:www\.)?hackerrank\.com/[^\s()<>]+"
         ]
         for pattern in platform_patterns:
             matches = re.findall(pattern, text, flags=re.IGNORECASE)
@@ -84,7 +83,10 @@ class ContactExtractor(EntityExtractor):
             
             # Avoid matching common resume noise (like "Seattle, WA" or file extensions like ".pdf")
             exclude_extensions = {".pdf", ".docx", ".doc", ".png", ".jpg"}
+            exclude_acronyms = {"b.tech", "m.tech", "b.sc", "m.sc", "ph.d", "b.a", "m.a", "b.com", "m.com"}
             if any(match_str.lower().endswith(ext) for ext in exclude_extensions):
+                continue
+            if match_str.lower() in exclude_acronyms:
                 continue
 
             # If it is part of the extracted email domain, skip
@@ -117,6 +119,17 @@ class ContactExtractor(EntityExtractor):
                 if not any(domain in url_lower for domain in exclude_domains):
                     if not portfolio_url:
                         portfolio_url = url
+
+        # Heuristic 3.5: Extract explicit handles if full URLs are missing
+        if not github_url:
+            gh_match = re.search(r"GitHub:\s*([^\s·|]+)", text, re.IGNORECASE)
+            if gh_match:
+                github_url = f"https://github.com/{gh_match.group(1)}"
+                
+        if not linkedin_url:
+            li_match = re.search(r"LinkedIn:\s*([^\s·|]+)", text, re.IGNORECASE)
+            if li_match:
+                linkedin_url = f"https://linkedin.com/in/{li_match.group(1)}"
 
         # 4. Name extraction
         full_name = None

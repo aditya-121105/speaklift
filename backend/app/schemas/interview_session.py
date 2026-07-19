@@ -20,7 +20,7 @@ class CreateInterviewSessionRequest(BaseModel):
 
     resume_id: int | None = None
 
-    job_description: str | None = None
+    job_description_id: int | None = None
 
 
 class InterviewSessionResponse(BaseModel):
@@ -57,7 +57,7 @@ class InterviewSessionDetailResponse(BaseModel):
 
     resume_id: int | None
 
-    job_description: str | None
+    job_description_id: int | None
 
     status: InterviewStatus
 

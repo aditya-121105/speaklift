@@ -102,7 +102,7 @@ class EducationExtractor(EntityExtractor):
         return None
 
     def _extract_cgpa(self, text: str) -> float | None:
-        match = re.search(r"\b(?:CGPA|GPA)\s*[:=]?\s*([0-9]\.[0-9]{1,2})\b", text, flags=re.IGNORECASE)
+        match = re.search(r"\b(?:CGPA|GPA)(?:\s+of)?\s*[:=-]?\s*([0-9]\.[0-9]{1,2})\b", text, flags=re.IGNORECASE)
         if match:
             return float(match.group(1))
         return None
@@ -123,9 +123,9 @@ class EducationExtractor(EntityExtractor):
         return years[0], years[-1]
 
     def _is_current(self, text: str, end_year: int | None) -> bool:
-        if re.search(r"\b(Present|Ongoing|Current|Now)\b", text, flags=re.IGNORECASE):
+        if re.search(r"\b(Present|Ongoing|Current|Now|Pursuing|Till Date)\b", text, flags=re.IGNORECASE):
             return True
-        if end_year and end_year >= datetime.now().year:
+        if end_year and end_year > datetime.now().year:
             return True
         return False
 

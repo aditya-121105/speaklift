@@ -1,14 +1,12 @@
 from sqlalchemy.orm import Session
-from app.shared.enums import InterviewStatus, QuestionType, AnswerSource
+from app.shared.enums import InterviewStatus, QuestionType
 from app.shared.exceptions import (
     InterviewSessionNotFoundError,
     InterviewQuestionNotFoundError,
     InvalidSessionStateError,
 )
-from datetime import datetime
 from app.services.question_selection.schemas.question_selection import QuestionSelection
 from app.models.interview_question import InterviewQuestion
-from app.models.interview_answer import InterviewAnswer
 from app.models.interview_session import InterviewSession
 from app.services.interview_execution.repository import (
     ExecutionSessionRepository,
@@ -20,7 +18,6 @@ from app.services.interview_execution.schemas.interview_execution_state import (
     CurrentQuestion
 )
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
-from app.services.question_selection.schemas.question_selection import SelectedQuestion
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

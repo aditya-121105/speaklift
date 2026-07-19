@@ -22,7 +22,7 @@ class CertificationExtractor(EntityExtractor):
 
     def extract(self, context: ProcessingContext) -> list[CertificationRecord]:
         certifications = []
-        cert_sections = self._find_certification_sections(context.document.raw_text)
+        cert_sections = self._find_certification_sections(context)
 
         for text in cert_sections:
             record = self._parse_certification(text)
@@ -31,38 +31,13 @@ class CertificationExtractor(EntityExtractor):
 
         return certifications
 
-    def _find_certification_sections(self, text: str) -> list[str]:
-        lines = text.split('\n')
+    def _find_certification_sections(self, context: ProcessingContext) -> list[str]:
         sections = []
-        in_certs = False
-        current_section = []
-        
-        heading_pattern = re.compile(r'^(?:[A-Z][a-z]+(?:[ \t]+(?:&|and|[A-Z][a-z]+))*)[ \t]*(?:\:|\s*-)?\s*$')
-
-        for line in lines:
-            stripped = line.strip()
-            if not stripped:
-                if current_section:
-                    current_section.append(line)
-                continue
+        if 'certifications' in context.document.sections:
+            sections.append(context.document.sections['certifications'].content)
             
-            if len(stripped) < 40 and (stripped.isupper() or heading_pattern.match(stripped)):
-                if re.search(r'\b(certifications?|licenses?|credentials?)\b', stripped, re.IGNORECASE):
-                    in_certs = True
-                    current_section = []
-                    continue
-                elif in_certs:
-                    if re.search(r'\b(education|experience|skills|projects?|summary|contact|profile|work|employment|languages)\b', stripped, re.IGNORECASE):
-                        if current_section:
-                            sections.append('\n'.join(current_section).strip())
-                            current_section = []
-                        in_certs = False
-            
-            if in_certs:
-                current_section.append(line)
-                
-        if current_section:
-            sections.append('\n'.join(current_section).strip())
+        if not sections:
+            return []
 
         cert_texts = []
         for section in sections:
@@ -125,14 +100,18 @@ class CertificationExtractor(EntityExtractor):
             
             line = re.sub(r'^[-•*]\s*', '', line)
             
+            # Avoid picking up long descriptions as titles
+            if len(line) > 80:
+                continue
+                
             match = re.match(r'^([^|–\-:(]+)', line)
             if match:
                 name = match.group(1).strip()
                 # Exclude if it looks like a date or common word
-                if 2 < len(name) < 100 and not re.match(r'^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)', name, re.IGNORECASE):
+                if 2 < len(name) < 80 and not re.match(r'^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})', name, re.IGNORECASE):
                     return name
             
-            if 2 < len(line) < 100:
+            if 2 < len(line) < 80 and not re.match(r'^(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|20\d{2})', line, re.IGNORECASE):
                 return line
                 
         return None

@@ -142,6 +142,7 @@ class JDSkillExtractor(EntityExtractor):
             if replace:
                 extracted_skills[normalized_name] = JDSkillRecord(
                     name=normalized_name,
+                    normalized_name=normalized_name,
                     requirement_tier=best_tier,
                     confidence=best_confidence
                 )
@@ -149,6 +150,7 @@ class JDSkillExtractor(EntityExtractor):
             if best_confidence > 0.0:
                 extracted_skills[normalized_name] = JDSkillRecord(
                     name=normalized_name,
+                    normalized_name=normalized_name,
                     requirement_tier=best_tier,
                     confidence=best_confidence
                 )

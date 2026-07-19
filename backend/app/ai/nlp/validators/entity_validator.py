@@ -1,4 +1,3 @@
-from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 from app.ai.nlp.validators.base import Validator, T
 from app.ai.nlp.validators.duplicate import DuplicateValidator
 from app.ai.nlp.validators.chronology import ChronologyValidator

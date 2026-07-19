@@ -2,14 +2,21 @@ import pytest
 from app.ai.nlp.extractors.certification_extractor import CertificationExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 
-from app.ai.document_processing.schemas import DocumentContent
+from app.ai.document_processing.schemas import DocumentContent, DocumentSection, SectionType
 from app.ai.nlp.schemas.processed_document import ProcessedDocument
 
 def create_context(text: str) -> ProcessingContext:
+    lines = text.split('\n')
+    for i, line in enumerate(lines):
+        if line.strip():
+            content = '\n'.join(lines[i+1:])
+            break
+    else:
+        content = text
     doc = DocumentContent(
         raw_text=text,
         cleaned_text=text,
-        sections={},
+        sections={"certifications": DocumentSection(section_type=SectionType.CERTIFICATIONS, heading="Certifications", content=content, start_char=0, end_char=len(content))},
         source_filename="test.pdf"
     )
     processed = ProcessedDocument(

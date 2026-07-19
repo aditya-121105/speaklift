@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class JDCompanyRecord(BaseModel):
@@ -11,6 +11,6 @@ class JDCompanyRecord(BaseModel):
     company_name: str | None
     industry: str | None
     company_size: str | None
-    culture_keywords: list[str] | None
+    culture_keywords: list[str] = Field(default_factory=list)
     website: str | None
     confidence: float

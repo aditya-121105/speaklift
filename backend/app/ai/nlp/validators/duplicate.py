@@ -68,46 +68,42 @@ class DuplicateValidator(Validator):
         # Deduplicate skills
         seen_skills = set()
         unique_skills = []
-        if entities.skills:
-            for s in entities.skills:
-                key = s.normalized_name.lower()
-                if key not in seen_skills:
-                    seen_skills.add(key)
-                    unique_skills.append(s)
+        for s in entities.skills:
+            key = s.normalized_name.lower()
+            if key not in seen_skills:
+                seen_skills.add(key)
+                unique_skills.append(s)
 
         # Deduplicate experience
         seen_exp = set()
         unique_exp = []
-        if entities.experience:
-            for e in entities.experience:
-                key = (e.min_years, e.max_years, (e.domain or "").lower())
-                if key not in seen_exp:
-                    seen_exp.add(key)
-                    unique_exp.append(e)
+        for e in entities.experience:
+            key = (e.min_years, e.max_years, (e.domain or "").lower())
+            if key not in seen_exp:
+                seen_exp.add(key)
+                unique_exp.append(e)
 
         # Deduplicate responsibilities
         seen_resp = set()
         unique_resp = []
-        if entities.responsibilities:
-            for r in entities.responsibilities:
-                key = r.description.lower()
-                if key not in seen_resp:
-                    seen_resp.add(key)
-                    unique_resp.append(r)
+        for r in entities.responsibilities:
+            key = r.description.lower()
+            if key not in seen_resp:
+                seen_resp.add(key)
+                unique_resp.append(r)
 
         # Deduplicate education
         seen_edu = set()
         unique_edu = []
-        if entities.education:
-            for ed in entities.education:
-                key = (ed.min_degree_level or "", (ed.field_of_study or "").lower())
-                if key not in seen_edu:
-                    seen_edu.add(key)
-                    unique_edu.append(ed)
+        for ed in entities.education:
+            key = (ed.min_degree_level or "", (ed.field_of_study or "").lower())
+            if key not in seen_edu:
+                seen_edu.add(key)
+                unique_edu.append(ed)
 
         return entities.model_copy(update={
-            "skills": unique_skills if entities.skills else None,
-            "experience": unique_exp if entities.experience else None,
-            "responsibilities": unique_resp if entities.responsibilities else None,
-            "education": unique_edu if entities.education else None
+            "skills": unique_skills,
+            "experience": unique_exp,
+            "responsibilities": unique_resp,
+            "education": unique_edu
         })

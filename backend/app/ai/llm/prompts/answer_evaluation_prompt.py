@@ -1,4 +1,3 @@
-import json
 from app.ai.llm.prompts.base import Prompt, PromptVersion
 from app.services.evaluation.schemas.answer_evaluation import AnswerEvaluation
 

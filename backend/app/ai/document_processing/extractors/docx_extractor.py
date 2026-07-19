@@ -23,7 +23,6 @@ import io
 import logging
 
 import docx
-from docx.oxml.ns import qn
 from docx.table import Table
 from docx.text.paragraph import Paragraph
 

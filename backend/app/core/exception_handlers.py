@@ -12,13 +12,6 @@ from fastapi.exceptions import RequestValidationError, HTTPException
 
 from app.shared.exceptions import (
     SpeakLiftException,
-    ValidationError,
-    NotFoundError,
-    UnauthorizedError,
-    ConflictError,
-    AuthenticationError,
-    InvalidSessionStateError,
-    EvaluationError,
 )
 
 logger = logging.getLogger(__name__)

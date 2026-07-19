@@ -70,7 +70,7 @@ class NLPPipeline:
                 responsibilities=extracted_kwargs.get("responsibilities", []),
                 company=extracted_kwargs.get("company", JDCompanyRecord(
                     company_name=None, industry=None, company_size=None,
-                    culture_keywords=None, website=None, confidence=0.0
+                    culture_keywords=[], website=None, confidence=0.0
                 )),
                 source_filename=document.source_filename,
                 pipeline_version="C.5.2",

@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 
 
 from typing import TypeVar, Generic

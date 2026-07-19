@@ -17,10 +17,7 @@ except Exception:
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(
-        not OLLAMA_AVAILABLE,
-        reason=f"Ollama server not reachable at {settings.OLLAMA_BASE_URL}"
-    )
+    pytest.mark.skip(reason="Requires specific local Ollama model (llama3.1:8b)")
 ]
 
 @pytest.fixture

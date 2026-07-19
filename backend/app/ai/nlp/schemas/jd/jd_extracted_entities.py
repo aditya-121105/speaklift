@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from .jd_skill_schema import JDSkillRecord
 from .jd_experience_schema import JDExperienceRecord
 from .jd_education_schema import JDEducationRecord
@@ -15,10 +15,10 @@ class ExtractedJDEntities(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     employment: JDEmploymentRecord
-    skills: list[JDSkillRecord]
-    experience: list[JDExperienceRecord]
-    education: list[JDEducationRecord]
-    responsibilities: list[JDResponsibilityRecord]
+    skills: list[JDSkillRecord] = Field(default_factory=list)
+    experience: list[JDExperienceRecord] = Field(default_factory=list)
+    education: list[JDEducationRecord] = Field(default_factory=list)
+    responsibilities: list[JDResponsibilityRecord] = Field(default_factory=list)
     company: JDCompanyRecord
     
     source_filename: str

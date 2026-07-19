@@ -66,7 +66,7 @@ def test_skill_extractor_normalization_and_taxonomy():
     tech_names = {t.normalized_name for t in skill_set.technologies}
     assert "PostgreSQL" in tech_names
     # Python is not under databases, cloud, devops, tools, or operating_systems, so it's not a technology
-    assert "Python" not in tech_names
+    assert "Python" in tech_names
 
 
 def test_skill_extractor_sections_and_confidence():

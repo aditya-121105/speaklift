@@ -17,8 +17,7 @@ from app.repositories.interview_question_repository import InterviewQuestionRepo
 from app.repositories.interview_answer_repository import InterviewAnswerRepository
 from app.repositories.question_bank_repository import QuestionBankRepository
 
-from app.ai.llm.services.llm_service import LLMService
-
+from app.ai.llm.factory import get_llm_service
 def get_matching_engine() -> MatchingEngine:
     return MatchingEngine(
         skill_matcher=SkillMatcher(),
@@ -45,7 +44,7 @@ def get_evaluation_service() -> InterviewEvaluationService:
     
     # In a full DI setup, LLMService config would be parsed from settings. 
     # Using defaults for orchestration freeze sprint.
-    llm_service = LLMService()
+    llm_service = get_llm_service()
     
     return InterviewEvaluationService(
         deterministic_engine=deterministic_engine,

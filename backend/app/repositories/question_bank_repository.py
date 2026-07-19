@@ -1,4 +1,5 @@
-from sqlalchemy import func, or_
+from sqlalchemy import func, or_, cast
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Session
 
 from app.models.question_bank import QuestionBank
@@ -107,11 +108,11 @@ class QuestionBankRepository(QuestionRepository):
                 QuestionBank.experience_level == experience_level,
                 QuestionBank.is_active.is_(True),
                 or_(
-                    QuestionBank.skills.contains(
-                        [objective.name]
+                    cast(QuestionBank.skills, JSONB).op("?")(
+                        objective.name
                     ),
-                    QuestionBank.technologies.contains(
-                        [objective.name]
+                    cast(QuestionBank.technologies, JSONB).op("?")(
+                        objective.name
                     ),
                 ),
             )

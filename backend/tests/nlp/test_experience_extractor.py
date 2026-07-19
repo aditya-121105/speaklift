@@ -55,7 +55,7 @@ def test_experience_extractor_full_time():
     assert record.start_date == "Jan 2020"
     assert record.end_date == "Dec 2022"
     assert record.is_current is False
-    assert record.duration_months == 24
+    assert record.duration_months == 35
     assert "Python" in record.technologies_used
     assert "PostgreSQL" in record.technologies_used
 

@@ -18,11 +18,9 @@ from app.services.interview_session_service import (
 )
 from app.services.interview_workflow_service import InterviewWorkflowService
 from app.services.interview_execution.execution_service import InterviewExecutionService
-from app.services.evaluation.evaluation_service import InterviewEvaluationService
 from app.dependencies.engine import (
     get_interview_workflow_service,
-    get_execution_service,
-    get_evaluation_service
+    get_execution_service
 )
 from app.services.interview_execution.schemas.interview_execution_state import InterviewExecutionState
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer

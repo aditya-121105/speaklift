@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-07-19
+
+### Added
+- **Backend Milestone M1: End-to-End Interview Startup Validation**
+- Integrated document reconstruction engine between PDF extraction and Section Detection.
+- Introduced `InterviewWorkflowService` to orchestrate end-to-end interview startup.
+- Introduced factory methods to gracefully supply complete domain aggregates for candidate and job profiles.
+
+### Changed
+- Unified the parallel pipeline architecture: `InterviewWorkflowService` now acts as the central facade for `MatchingEngine`, `InterviewPlanner`, and `QuestionSelector`.
+- Updated PostgreSQL JSON querying in `QuestionBankRepository` to use the JSONB `?` operator.
+- Resolved dependency injection issues in FastAPI evaluation services.
+- Successfully achieved a fully automated pipeline executing from Document Parsing -> AI Extraction -> Domain Model Creation -> Skill Matching -> Interview Planning -> Question Selection.
+
+### Removed
+- Deprecated legacy `InterviewQuestionGeneratorService` and old live-flow shims in favor of the full `InterviewWorkflowService` pipeline.
+
+---
+
 ### Added
 
 - Sprint C9.2 completed (AI Infrastructure) with historical record from C9.2.1 to C9.2.8.2.

@@ -1,4 +1,4 @@
-from typing import AsyncIterator, Iterator, Any
+from typing import AsyncIterator, Iterator
 
 from app.ai.llm.providers import LLMProvider, LLMResponse
 from app.ai.shared.exceptions import AIConfigurationError, AIValidationError, LLMProviderError, LLMRateLimitError

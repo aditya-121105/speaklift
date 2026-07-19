@@ -12,6 +12,9 @@ from app.services.job_description_service import (
 from app.shared.exceptions import InvalidFileTypeError, FileTooLargeError
 from app.core.storage import StorageBackend
 from app.ai.document_processing.services import DocumentExtractionService
+from app.ai.nlp.pipeline import NLPPipeline
+from app.ai.nlp.validators.entity_validator import EntityValidator
+from app.services.job_profile.builder import JobProfileBuilder
 
 
 @pytest.fixture
@@ -28,7 +31,27 @@ def mock_extractor():
     extractor.extract.return_value = MagicMock()
     return extractor
 
-def test_upload_jd_successful_orchestration(mock_db, mock_storage, mock_extractor, monkeypatch):
+@pytest.fixture
+def mock_nlp():
+    nlp = MagicMock(spec=NLPPipeline)
+    nlp.run.return_value = MagicMock()
+    return nlp
+
+@pytest.fixture
+def mock_validator():
+    validator = MagicMock(spec=EntityValidator)
+    validator.validate_entities.return_value = MagicMock()
+    return validator
+
+@pytest.fixture
+def mock_builder():
+    builder = MagicMock(spec=JobProfileBuilder)
+    job_profile = MagicMock()
+    job_profile.model_dump.return_value = {"id": "test"}
+    builder.build.return_value = job_profile
+    return builder
+
+def test_upload_jd_successful_orchestration(mock_db, mock_storage, mock_extractor, mock_nlp, mock_validator, mock_builder, monkeypatch):
     def mock_create(db, jd):
         jd.id = 1
         return jd
@@ -44,6 +67,9 @@ def test_upload_jd_successful_orchestration(mock_db, mock_storage, mock_extracto
         file_data=b"dummy content",
         storage=mock_storage,
         document_extractor=mock_extractor,
+        nlp_pipeline=mock_nlp,
+        entity_validator=mock_validator,
+        profile_builder=mock_builder,
     )
 
     assert jd.parsing_status == ParsingStatus.COMPLETED
@@ -55,7 +81,7 @@ def test_upload_jd_successful_orchestration(mock_db, mock_storage, mock_extracto
     mock_extractor.extract.assert_called_once()
     mock_db.commit.assert_called()
 
-def test_upload_jd_invalid_file(mock_db, mock_storage, mock_extractor):
+def test_upload_jd_invalid_file(mock_db, mock_storage, mock_extractor, mock_nlp, mock_validator, mock_builder):
     with pytest.raises(InvalidFileTypeError):
         JobDescriptionService.upload_job_description(
             db=mock_db,
@@ -65,9 +91,12 @@ def test_upload_jd_invalid_file(mock_db, mock_storage, mock_extractor):
             file_data=b"...",
             storage=mock_storage,
             document_extractor=mock_extractor,
+            nlp_pipeline=mock_nlp,
+            entity_validator=mock_validator,
+            profile_builder=mock_builder,
         )
 
-def test_upload_jd_storage_failure(mock_db, mock_storage, mock_extractor):
+def test_upload_jd_storage_failure(mock_db, mock_storage, mock_extractor, mock_nlp, mock_validator, mock_builder):
     mock_storage.save.side_effect = OSError("Disk full")
 
     with pytest.raises(JobDescriptionUploadError):
@@ -79,9 +108,12 @@ def test_upload_jd_storage_failure(mock_db, mock_storage, mock_extractor):
             file_data=b"dummy",
             storage=mock_storage,
             document_extractor=mock_extractor,
+            nlp_pipeline=mock_nlp,
+            entity_validator=mock_validator,
+            profile_builder=mock_builder,
         )
 
-def test_upload_jd_extraction_failure(mock_db, mock_storage, mock_extractor, monkeypatch):
+def test_upload_jd_extraction_failure(mock_db, mock_storage, mock_extractor, mock_nlp, mock_validator, mock_builder, monkeypatch):
     def mock_create(db, jd):
         jd.id = 1
         return jd
@@ -99,6 +131,9 @@ def test_upload_jd_extraction_failure(mock_db, mock_storage, mock_extractor, mon
         file_data=b"dummy",
         storage=mock_storage,
         document_extractor=mock_extractor,
+        nlp_pipeline=mock_nlp,
+        entity_validator=mock_validator,
+        profile_builder=mock_builder,
     )
 
     assert jd.parsing_status == ParsingStatus.FAILED

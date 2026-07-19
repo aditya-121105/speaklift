@@ -29,6 +29,7 @@ import pdfplumber
 from app.ai.document_processing.extractors import DocumentExtractor
 from app.ai.document_processing.schemas import DocumentContent
 from app.ai.shared.exceptions import AIValidationError, DocumentExtractionError
+from app.ai.document_processing.layout_reconstructor import DocumentReconstructionEngine
 
 logger = logging.getLogger(__name__)
 
@@ -82,15 +83,13 @@ class PDFPlumberExtractor(DocumentExtractor):
             pdf_file = io.BytesIO(file_data)
             page_texts: list[str] = []
 
-            with pdfplumber.open(pdf_file) as pdf:
+            with pdfplumber.open(pdf_file, laparams={"all_texts": True}) as pdf:
                 page_count = len(pdf.pages)
+                reconstructor = DocumentReconstructionEngine()
 
                 for page_num, page in enumerate(pdf.pages, start=1):
                     try:
-                        text = page.extract_text(
-                            layout=True,
-                            use_text_flow=True,
-                        )
+                        text = reconstructor.reconstruct(page)
                         if text and text.strip():
                             page_texts.append(text)
                     except Exception as exc:

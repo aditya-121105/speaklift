@@ -161,7 +161,7 @@ def test_builder_education():
     builder = CandidateProfileBuilder()
     profile = builder.build(entities)
     
-    assert profile.education.highest_qualification == "Phd"
+    assert profile.education.highest_qualification == "PhD"
     assert profile.education.is_currently_studying is True
     assert profile.education.latest_institution == "Stanford"
     

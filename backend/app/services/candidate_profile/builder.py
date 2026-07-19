@@ -3,7 +3,6 @@ from datetime import datetime
 from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 from app.ai.nlp.schemas.experience_schema import ExperienceRecord
 from app.ai.nlp.schemas.project_schema import ProjectRecord
-from app.ai.nlp.schemas.skill_schema import SkillEntry
 
 from .schemas.profile import CandidateProfile
 from .schemas.identity import IdentityProfile, ContactInformation, SocialProfile
@@ -30,17 +29,21 @@ class CandidateProfileBuilder:
         technology = self._build_technology(entities)
         metadata = self._build_metadata(entities)
 
-        projects = [
-            CandidateProject(
-                name=p.name,
-                description=p.description,
-                technologies=p.technologies,
-                skills=p.skills,
-                start_date=p.start_date,
-                end_date=p.end_date
+        projects = []
+        for p in entities.projects:
+            desc = p.summary or ""
+            if p.achievements:
+                desc += "\nAchievements:\n" + "\n".join(f"- {a}" for a in p.achievements)
+            projects.append(
+                CandidateProject(
+                    name=p.name,
+                    description=desc.strip() or p.description,
+                    technologies=p.technologies,
+                    skills=p.skills,
+                    start_date=p.start_date,
+                    end_date=p.end_date
+                )
             )
-            for p in entities.projects
-        ]
 
         certifications = [
             CandidateCertification(
@@ -187,17 +190,24 @@ class CandidateProfileBuilder:
         )
 
     def _compute_highest_qualification(self, entities: ExtractedEntities) -> str | None:
-        hierarchy = ["phd", "master", "bachelor", "diploma", "associate", "certificate"]
+        hierarchy = [
+            (["phd", "ph.d", "doctorate"], "PhD"),
+            (["master", "m.tech", "m.s", "m.a", "mba", "m.b.a", "m.e", "m.sc"], "Master"),
+            (["bachelor", "b.tech", "b.s", "b.a", "b.e", "b.sc", "b.com"], "Bachelor"),
+            (["diploma"], "Diploma"),
+            (["associate"], "Associate"),
+            (["certificate"], "Certificate")
+        ]
         
         best_rank = len(hierarchy)
         best_degree = None
 
         for ed in entities.education:
             degree_str = (ed.degree or "").lower()
-            for rank_idx, rank_keyword in enumerate(hierarchy):
-                if rank_keyword in degree_str and rank_idx < best_rank:
+            for rank_idx, (keywords, title) in enumerate(hierarchy):
+                if any(kw in degree_str for kw in keywords) and rank_idx < best_rank:
                     best_rank = rank_idx
-                    best_degree = rank_keyword.title()
+                    best_degree = title
 
         return best_degree
 
@@ -225,17 +235,25 @@ class CandidateProfileBuilder:
         # Mapping from NLP categories to business profile categories
         cat_map = {
             "language": "languages",
+            "languages": "languages",
+            "programming_languages": "languages",
             "framework": "frameworks",
+            "frameworks": "frameworks",
             "library": "libraries",
+            "libraries": "libraries",
             "database": "databases",
+            "databases": "databases",
             "cloud": "cloud",
             "devops": "devops",
             "machine learning": "ai_ml",
             "ai": "ai_ml",
+            "ai_ml": "ai_ml",
             "testing": "testing",
             "os": "operating_systems",
             "operating system": "operating_systems",
-            "tool": "tools"
+            "operating_systems": "operating_systems",
+            "tool": "tools",
+            "tools": "tools"
         }
 
         unique_nodes = {}

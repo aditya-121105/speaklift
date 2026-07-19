@@ -12,7 +12,8 @@ class TaxonomyResourceManager:
     _taxonomy: Optional[dict[str, tuple[str, str]]] = None
     _synonyms: Optional[dict[str, str]] = None
     _technology_categories = {
-        "databases", "cloud", "devops", "tools", "operating_systems"
+        "databases", "cloud", "devops", "tools", "operating_systems",
+        "frameworks", "libraries", "ai_ml", "programming_languages", "testing"
     }
     _lock: threading.Lock = threading.Lock()
 

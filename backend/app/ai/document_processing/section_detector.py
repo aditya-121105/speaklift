@@ -302,7 +302,10 @@ class SectionDetector:
         # Followed immediately by a blank line
         next_index = line_index + 1
         if next_index < len(all_lines) and all_lines[next_index].strip() == "":
-            return True
+            # If it's just a short line followed by a blank line, it might just be the end of a paragraph.
+            # Real headings are usually very short (<= 4 words) and don't end with punctuation.
+            if not re.search(r'[.,;!]$', line) and len(line.split()) <= 4:
+                return True
 
         # Check against known heading patterns even without formatting cues
         # (handles "Skills" alone on a line with no colon/caps/blank-after)

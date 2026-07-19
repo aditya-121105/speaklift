@@ -1,5 +1,4 @@
 import re
-from datetime import datetime
 
 from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 from app.ai.nlp.validators.base import Validator

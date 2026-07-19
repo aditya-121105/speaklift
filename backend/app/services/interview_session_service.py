@@ -31,7 +31,7 @@ class InterviewSessionService:
             experience_level=payload.experience_level,
             duration_minutes=payload.duration_minutes,
             resume_id=payload.resume_id,
-            job_description=payload.job_description,
+            job_description_id=payload.job_description_id,
             status=InterviewStatus.CREATED,
         )
 

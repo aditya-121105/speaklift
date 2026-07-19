@@ -1,7 +1,5 @@
-import json
 import re
 from pathlib import Path
-from typing import Any
 from app.ai.nlp.extractors.base import EntityExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.skill_schema import SkillSet, SkillEntry

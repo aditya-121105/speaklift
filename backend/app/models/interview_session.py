@@ -1,17 +1,14 @@
 # app/models/interview_session.py
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from app.models.interview_evaluation import (
-        InterviewEvaluation,
-    )
+    from app.models.resume import Resume
+    from app.models.job_description import JobDescription
 from datetime import datetime
 
 from sqlalchemy import (
     Enum,
     ForeignKey,
-    Integer,
     String,
-    Text,
     DateTime,
 )
 from sqlalchemy.orm import (
@@ -55,12 +52,23 @@ class InterviewSession(Base, TimestampMixin):
     )
 
     resume_id: Mapped[int | None] = mapped_column(
+        ForeignKey("resumes.id", ondelete="SET NULL"),
         nullable=True,
     )
 
-    job_description: Mapped[str | None] = mapped_column(
-        Text,
+    job_description_id: Mapped[int | None] = mapped_column(
+        ForeignKey("job_descriptions.id", ondelete="SET NULL"),
         nullable=True,
+    )
+    
+    resume: Mapped["Resume"] = relationship(
+        "Resume",
+        lazy="joined",
+    )
+    
+    job_description: Mapped["JobDescription"] = relationship(
+        "JobDescription",
+        lazy="joined",
     )
 
     status: Mapped[InterviewStatus] = mapped_column(

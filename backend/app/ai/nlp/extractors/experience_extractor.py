@@ -109,7 +109,12 @@ class ExperienceExtractor(EntityExtractor):
         types = ["Full-time", "Part-time", "Contract", "Freelance", "Internship", "Intern"]
         for emp_type in types:
             if re.search(rf"\b{re.escape(emp_type)}\b", text, flags=re.IGNORECASE):
-                return "Internship" if emp_type.lower() == "intern" else emp_type
+                return "Internship" if "intern" in emp_type.lower() else emp_type
+        
+        # If job title has intern, it's an internship
+        if re.search(r"\bintern(?:ship)?\b", text, flags=re.IGNORECASE):
+            return "Internship"
+            
         return None
 
     def _extract_location(self, text: str, context: ProcessingContext) -> str | None:
@@ -122,7 +127,7 @@ class ExperienceExtractor(EntityExtractor):
         return None
 
     def _extract_dates(self, text: str) -> tuple[str | None, str | None]:
-        pattern = r"\b(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\s*\d{4}\b|\b\d{4}\b"
+        pattern = r"\b(?:(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s*\d{4}|\d{4})\b"
         matches = re.findall(pattern, text, flags=re.IGNORECASE)
         if not matches:
             return None, None
@@ -136,17 +141,38 @@ class ExperienceExtractor(EntityExtractor):
         return False
 
     def _calculate_duration(self, start_date: str | None, end_date: str | None, is_current: bool) -> int | None:
-        try:
-            start_year = int(re.search(r"\d{4}", start_date).group()) if start_date else None
-            if is_current:
-                end_year = datetime.now().year
-            else:
-                end_year = int(re.search(r"\d{4}", end_date).group()) if end_date else None
-            
-            if start_year and end_year and end_year >= start_year:
-                return (end_year - start_year) * 12
-        except Exception:
-            pass
+        if not start_date:
+            return None
+
+        def parse_date(d_str):
+            try:
+                # Try to parse Month Year
+                dt = datetime.strptime(d_str.strip(), "%b %Y")
+                return dt
+            except ValueError:
+                pass
+            try:
+                dt = datetime.strptime(d_str.strip(), "%B %Y")
+                return dt
+            except ValueError:
+                pass
+            try:
+                # Just year
+                year = int(re.search(r"\d{4}", d_str).group())
+                return datetime(year, 1, 1)
+            except Exception:
+                return None
+
+        start_dt = parse_date(start_date)
+        if not start_dt:
+            return None
+
+        end_dt = datetime.now() if is_current else parse_date(end_date) if end_date else None
+        
+        if end_dt and end_dt >= start_dt:
+            months = (end_dt.year - start_dt.year) * 12 + (end_dt.month - start_dt.month)
+            return max(1, months)  # Minimum 1 month
+
         return None
 
     def _extract_description(self, text: str) -> str | None:
