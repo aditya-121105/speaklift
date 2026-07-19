@@ -7,7 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-07-19
+
+### Added
+- **Milestone M2.1 – Evaluation Engine Completion**
+- `GrammarFeatureExtractor`: Deterministic grammar quality scoring using spaCy dependency-parse heuristics (SV mismatch, fragment detection, double negation).
+- `ReadabilityFeatureExtractor`: Flesch Reading Ease and Flesch-Kincaid Grade Level metrics computed from syllable and sentence statistics.
+- `ConfidenceFeatureExtractor`: Lexicon-based filler-word and hedging-phrase detection producing a normalised confidence score.
+- `SemanticSimilarityFeatureExtractor`: Local BAAI/bge-base-en-v1.5 sentence-embedding cosine similarity between question and answer (no external API calls).
+- New immutable Pydantic schemas: `GrammarEvaluation`, `ReadabilityEvaluation`, `ConfidenceEvaluation`, `SemanticEvaluation`.
+- Extended `AnswerEvaluation` with optional `grammar`, `readability`, `confidence`, and `semantic_similarity` fields.
+- 36 new tests across 5 test files covering all new extractors and the enriched prompt builder.
+
+### Changed
+- `DeterministicEvaluationEngine`: Fully refactored to orchestrate all four new feature extractors. Backward-compatible via optional constructor parameters.
+- `AnswerEvaluationPromptBuilder` (v1.1): Now injects vocabulary statistics, grammar, readability, confidence, and semantic metrics into the LLM prompt when available.
+- `app/dependencies/engine.py`: Updated `get_evaluation_service()` to wire all new extractors into `DeterministicEvaluationEngine`.
+- `pyproject.toml`: Registered `slow` pytest mark for embedding-model tests.
+
+---
+
 ## [0.8.0] - 2026-07-19
+
 
 ### Added
 - **Backend Milestone M1: End-to-End Interview Startup Validation**

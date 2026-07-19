@@ -11,6 +11,10 @@ from app.services.evaluation.evaluation_service import InterviewEvaluationServic
 from app.services.evaluation.engine import DeterministicEvaluationEngine
 from app.services.evaluation.feature_extractors.text.text_processor import TextProcessor
 from app.services.evaluation.feature_extractors.text.vocabulary_feature_extractor import VocabularyFeatureExtractor
+from app.services.evaluation.feature_extractors.text.grammar_feature_extractor import GrammarFeatureExtractor
+from app.services.evaluation.feature_extractors.text.readability_feature_extractor import ReadabilityFeatureExtractor
+from app.services.evaluation.feature_extractors.text.confidence_feature_extractor import ConfidenceFeatureExtractor
+from app.services.evaluation.feature_extractors.text.semantic_similarity_feature_extractor import SemanticSimilarityFeatureExtractor
 
 from app.repositories.interview_session_repository import InterviewSessionRepository
 from app.repositories.interview_question_repository import InterviewQuestionRepository
@@ -33,23 +37,23 @@ def get_question_selector() -> QuestionSelector:
     return QuestionSelector(repository=QuestionBankRepository())
 
 def get_evaluation_service() -> InterviewEvaluationService:
-    # Build Deterministic Engine
-    text_processor = TextProcessor()
-    vocabulary_extractor = VocabularyFeatureExtractor()
-    
+    # Build fully-equipped Deterministic Engine (M2.1)
     deterministic_engine = DeterministicEvaluationEngine(
-        text_processor=text_processor,
-        vocabulary_extractor=vocabulary_extractor
+        text_processor=TextProcessor(),
+        vocabulary_extractor=VocabularyFeatureExtractor(),
+        grammar_extractor=GrammarFeatureExtractor(),
+        readability_extractor=ReadabilityFeatureExtractor(),
+        confidence_extractor=ConfidenceFeatureExtractor(),
+        semantic_extractor=SemanticSimilarityFeatureExtractor(),
     )
-    
-    # In a full DI setup, LLMService config would be parsed from settings. 
-    # Using defaults for orchestration freeze sprint.
+
     llm_service = get_llm_service()
-    
+
     return InterviewEvaluationService(
         deterministic_engine=deterministic_engine,
         llm_service=llm_service
     )
+
 
 def get_execution_service() -> InterviewExecutionService:
     return InterviewExecutionService(

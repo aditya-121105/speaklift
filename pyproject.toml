@@ -39,4 +39,5 @@ pythonpath = ["backend"]
 testpaths = ["backend/tests"]
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
+    "slow: marks tests that load heavy models (deselect with '-m \"not slow\"')",
 ]

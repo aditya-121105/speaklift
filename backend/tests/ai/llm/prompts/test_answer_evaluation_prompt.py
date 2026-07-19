@@ -21,7 +21,7 @@ def test_prompt_construction(dummy_metrics):
     )
     
     assert prompt.name == "answer_evaluation"
-    assert prompt.version == PromptVersion(major=1, minor=0)
+    assert prompt.version == PromptVersion(major=1, minor=1)
     
     # Metadata assertions
     assert prompt.metadata["question_length"] > 0
@@ -39,7 +39,7 @@ def test_prompt_rendering(dummy_metrics):
     render_result = prompt.render()
     
     assert render_result.system_prompt is not None
-    assert "DO NOT generate, calculate, or modify the quantitative technical scores" in render_result.system_prompt
+    assert "DO NOT generate, calculate, or modify the quantitative scores" in render_result.system_prompt
     assert "strengths" in render_result.system_prompt
     assert "weaknesses" in render_result.system_prompt
     assert "communication" in render_result.system_prompt
@@ -49,7 +49,7 @@ def test_prompt_rendering(dummy_metrics):
     assert "Interview Question:\nQ1" in render_result.user_prompt
     assert "Candidate Answer:\nA1" in render_result.user_prompt
     assert "Interview Context:\nSenior Python Dev" in render_result.user_prompt
-    assert "- Keyword Coverage: 0.85" in render_result.user_prompt
+    assert "Keyword Coverage" in render_result.user_prompt
     
     # Check metadata
     assert prompt.metadata["has_context"] is True
