@@ -1,4 +1,5 @@
 from app.services.interview_execution.execution_service import InterviewExecutionService
+from app.services.interview_execution.follow_up_generation_service import FollowUpGenerationService
 from app.services.question_selection.selector import QuestionSelector
 from app.services.interview_planner.planner import InterviewPlanner
 from app.services.matching.engine import MatchingEngine
@@ -22,6 +23,8 @@ from app.repositories.interview_answer_repository import InterviewAnswerReposito
 from app.repositories.question_bank_repository import QuestionBankRepository
 
 from app.ai.llm.factory import get_llm_service
+
+
 def get_matching_engine() -> MatchingEngine:
     return MatchingEngine(
         skill_matcher=SkillMatcher(),
@@ -30,15 +33,18 @@ def get_matching_engine() -> MatchingEngine:
         result_builder=MatchResultBuilder()
     )
 
+
 def get_planner() -> InterviewPlanner:
     return InterviewPlanner()
+
 
 def get_question_selector() -> QuestionSelector:
     return QuestionSelector(repository=QuestionBankRepository())
 
-def get_evaluation_service() -> InterviewEvaluationService:
-    # Build fully-equipped Deterministic Engine (M2.1)
-    deterministic_engine = DeterministicEvaluationEngine(
+
+def _build_deterministic_engine() -> DeterministicEvaluationEngine:
+    """Shared factory for the fully-equipped deterministic engine (M2.1)."""
+    return DeterministicEvaluationEngine(
         text_processor=TextProcessor(),
         vocabulary_extractor=VocabularyFeatureExtractor(),
         grammar_extractor=GrammarFeatureExtractor(),
@@ -47,21 +53,26 @@ def get_evaluation_service() -> InterviewEvaluationService:
         semantic_extractor=SemanticSimilarityFeatureExtractor(),
     )
 
-    llm_service = get_llm_service()
 
+def get_evaluation_service() -> InterviewEvaluationService:
+    llm_service = get_llm_service()
     return InterviewEvaluationService(
-        deterministic_engine=deterministic_engine,
-        llm_service=llm_service
+        deterministic_engine=_build_deterministic_engine(),
+        llm_service=llm_service,
     )
 
 
 def get_execution_service() -> InterviewExecutionService:
+    llm_service = get_llm_service()
     return InterviewExecutionService(
         session_repo=InterviewSessionRepository(),
         question_repo=InterviewQuestionRepository(),
         answer_repo=InterviewAnswerRepository(),
-        evaluation_service=get_evaluation_service()
+        evaluation_service=get_evaluation_service(),
+        deterministic_engine=_build_deterministic_engine(),
+        follow_up_service=FollowUpGenerationService(llm_service=llm_service),
     )
+
 
 def get_interview_workflow_service() -> InterviewWorkflowService:
     return InterviewWorkflowService(

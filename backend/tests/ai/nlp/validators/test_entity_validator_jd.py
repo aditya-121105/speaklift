@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.validators.entity_validator import EntityValidator
 from app.ai.nlp.validators.duplicate import DuplicateValidator
 from app.ai.nlp.validators.salary_range import SalaryRangeValidator

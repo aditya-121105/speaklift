@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.extractors.jd.jd_responsibility_extractor import JDResponsibilityExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.processed_document import ProcessedDocument

@@ -1,5 +1,4 @@
 import pytest
-from datetime import datetime
 from pydantic import ValidationError
 
 from app.ai.nlp.schemas.jd.jd_extracted_entities import ExtractedJDEntities

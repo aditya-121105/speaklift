@@ -86,7 +86,7 @@ class InterviewEvaluationService:
                     difficulty=DifficultyLevel.MEDIUM,
                     expected_duration_seconds=60,
                     tags=[],
-                    ordering=q.question_order,
+                    ordering=q.planned_order,
                     objective_name="General Evaluation"
                 )
                 requests.append(EvaluationRequest(submitted_answer=sub_ans, selected_question=sel_q))

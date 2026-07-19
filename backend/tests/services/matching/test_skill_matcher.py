@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import MagicMock
 
 from app.services.candidate_profile.schemas.technology import TechNode, TechnologyProfile as CandTechProfile

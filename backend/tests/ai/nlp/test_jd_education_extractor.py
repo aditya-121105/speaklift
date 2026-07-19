@@ -1,8 +1,7 @@
-import pytest
 from app.ai.nlp.extractors.jd.jd_education_extractor import JDEducationExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.processed_document import ProcessedDocument
-from app.ai.document_processing.schemas import DocumentContent, DocumentSection, SectionType
+from app.ai.document_processing.schemas import DocumentContent, DocumentSection
 
 
 def _build_context(text: str, sections_dict: dict = None) -> ProcessingContext:

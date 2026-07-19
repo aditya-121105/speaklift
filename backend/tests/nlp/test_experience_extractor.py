@@ -1,5 +1,4 @@
-import pytest
-from app.ai.document_processing.schemas import DocumentContent, DocumentSection
+from app.ai.document_processing.schemas import DocumentContent
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.processed_document import ProcessedDocument, NamedEntity
 from app.ai.nlp.extractors.experience_extractor import ExperienceExtractor

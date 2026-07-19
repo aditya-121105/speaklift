@@ -6,7 +6,6 @@ from app.services.matching.schemas.match_statistics import MatchStatistics
 from app.services.matching.schemas.skill_match_result import SkillMatchResult
 from app.services.matching.schemas.experience_match_result import ExperienceMatchResult
 from app.services.matching.schemas.education_match_result import EducationMatchResult
-from app.services.matching.schemas.match_result import MatchResult
 
 def test_match_result_builder_aggregation():
     # Setup mock statistics

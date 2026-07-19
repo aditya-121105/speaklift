@@ -1,9 +1,8 @@
-import os
 import pytest
 import asyncio
 from app.ai.llm.providers.gemini import GeminiProvider
 from app.ai.llm.prompts.base import Prompt, PromptVersion
-from app.ai.shared.exceptions import LLMProviderError, LLMRateLimitError
+from app.ai.shared.exceptions import LLMRateLimitError
 from app.core.config import settings
 
 # These tests execute real API calls and are only run when explicitly requested

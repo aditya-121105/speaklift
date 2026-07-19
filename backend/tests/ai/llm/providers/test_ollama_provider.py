@@ -1,11 +1,11 @@
 import pytest
 import asyncio
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from app.ai.llm.providers.ollama import OllamaProvider
 from app.ai.llm.providers import LLMResponse
 from app.ai.shared.exceptions import AIValidationError, LLMProviderError
-from app.ai.llm.prompts.base import Prompt, PromptRenderResult, PromptVersion
+from app.ai.llm.prompts.base import Prompt, PromptVersion
 from app.core.config import settings
 import ollama
 import httpx

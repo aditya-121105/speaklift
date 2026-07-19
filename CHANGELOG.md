@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Sprint M2.2.2 – Execution Queue Refactor**
+- Implemented Materialized Path execution queue architecture for adaptive interview paths.
+- Added `execution_path` (String) to `InterviewQuestion` for infinite-depth, lexicographical tree sorting (e.g. `01`, `01.01`).
+- Renamed `question_order` to `planned_order` to strictly represent the immutable interview plan mapping.
+
+### Changed
+- `InterviewExecutionService`: Replaced loop-based collision resolution with constant-time execution path derivation.
+- `FollowUpGenerationService`: Updated generate signature and instantiation logic to bind execution paths.
+- `InterviewQuestionRepository`: Queries now explicitly sort by `execution_path` rather than integer order.
+- Provided a backward-compatible database migration safely translating existing `question_order` integers into zero-padded execution paths.
+
+## [0.9.1] - 2026-07-19
+
+### Added
+- **Milestone M2.2 – Adaptive Interview System**
+- `AdaptiveDecisionEngine`: Stateless decision engine determining routing branches (Next Question, Follow-up, End Interview) based on real-time evaluation metrics.
+- `FollowUpPromptBuilder`: Constructs localized follow-up LLM prompts dynamically targeting specific candidate answer gaps (e.g. `WEAK_KEYWORD_COVERAGE`, `LOW_CONFIDENCE`).
+- `FollowUpGenerationService`: Generates and constructs contextual follow-up `InterviewQuestion`s via the `LLMService` with resilient template fallbacks.
+- Configurable `AdaptiveThresholds` providing fine-grained bounds for generation triggering (e.g., max follow-ups per primary question, weak metric counts).
+- Immutable `AdaptiveDecision` and `AdaptiveDecisionResult` value objects ensuring traceable decision auditing.
+
+### Changed
+- `InterviewExecutionService`: Completely refactored `submit_answer` to support dynamic adaptive routing, follow-up injection, and graceful limit enforcement without corrupting linear plan execution.
+- Resolved execution package cyclic dependency (via `EvaluationRequest` and `SubmittedAnswer`) by refining DI scoping and `__init__.py` export boundaries.
+
+---
+
 ## [0.9.0] - 2026-07-19
 
 ### Added

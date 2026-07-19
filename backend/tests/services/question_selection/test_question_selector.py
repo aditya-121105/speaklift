@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from sqlalchemy.orm import Session
 from app.services.interview_planner.schemas.interview_plan import InterviewPlan
 from app.services.interview_planner.schemas.interview_phase import InterviewPhase

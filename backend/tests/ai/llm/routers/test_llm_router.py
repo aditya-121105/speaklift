@@ -1,6 +1,5 @@
 import pytest
 import asyncio
-from unittest.mock import MagicMock
 
 from app.ai.llm.routers.router import LLMRouter
 from app.ai.llm.providers import LLMProvider, LLMResponse

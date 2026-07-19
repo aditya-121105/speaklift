@@ -1,5 +1,4 @@
 import os
-import pytest
 from app.core.config import Settings
 
 def test_default_configuration():

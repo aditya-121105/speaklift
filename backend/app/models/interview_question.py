@@ -5,6 +5,7 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     Text,
+    String,
 )
 from sqlalchemy.orm import (
     Mapped,
@@ -62,9 +63,15 @@ class InterviewQuestion(
         nullable=False,
     )
 
-    question_order: Mapped[int] = mapped_column(
+    planned_order: Mapped[int] = mapped_column(
         Integer,
         nullable=False,
+    )
+
+    execution_path: Mapped[str] = mapped_column(
+        String,
+        nullable=False,
+        index=True,
     )
 
     is_asked: Mapped[bool] = mapped_column(

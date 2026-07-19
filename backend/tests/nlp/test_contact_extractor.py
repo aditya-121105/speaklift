@@ -1,4 +1,3 @@
-import pytest
 from app.ai.document_processing.schemas import DocumentContent
 from app.ai.nlp.processors.spacy_processor import SpacyProcessor
 from app.ai.nlp.processors.normalizer import Normalizer

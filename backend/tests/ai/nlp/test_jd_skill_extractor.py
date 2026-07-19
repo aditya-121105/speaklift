@@ -1,9 +1,8 @@
 import pytest
-from unittest.mock import MagicMock
 from app.ai.nlp.extractors.jd.jd_skill_extractor import JDSkillExtractor
-from app.ai.nlp.schemas.jd.jd_skill_schema import RequirementTier, JDSkillRecord
+from app.ai.nlp.schemas.jd.jd_skill_schema import RequirementTier
 from app.ai.nlp.schemas.processing_context import ProcessingContext
-from app.ai.nlp.schemas.processed_document import ProcessedDocument, NamedEntity
+from app.ai.nlp.schemas.processed_document import ProcessedDocument
 from app.ai.document_processing.schemas import DocumentContent, DocumentSection, SectionType
 
 

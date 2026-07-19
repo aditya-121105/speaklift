@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.extractors.certification_extractor import CertificationExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 

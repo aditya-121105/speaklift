@@ -42,7 +42,7 @@ def run_smoke_test():
         output_tokens = response.output_tokens or 0
         total_tokens = input_tokens + output_tokens
 
-        print(f"Status            : [ PASS ]")
+        print("Status            : [ PASS ]")
         print(f"Active Provider   : {response.provider}")
         print(f"Active Model      : {response.model}")
         print(f"Routing Strategy  : {settings.LLM_ROUTING_STRATEGY}")
@@ -82,7 +82,7 @@ def run_smoke_test():
     except Exception as e:
         duration = time.time() - start_time
 
-        print(f"Status            : [ FAIL ]")
+        print("Status            : [ FAIL ]")
         print(f"Exception Type    : {type(e).__name__}")
         print(f"Error             : {e}")
         print(f"Elapsed Time      : {duration:.2f} seconds")

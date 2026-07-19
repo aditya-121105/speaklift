@@ -1,6 +1,6 @@
 # SpeakLift — Project Status Document
 
-> **Living Document** | Last Updated: July 19, 2026 | Backend Milestone M1 Completed: End-to-End Interview Startup Validation
+> **Living Document** | Last Updated: July 19, 2026 | Backend Milestone M2.2 Completed: Adaptive Interview System
 >
 > This document is the single source of truth for the SpeakLift project. It reflects the current state of the codebase as of the audit date and should be updated at the end of every sprint.
 
@@ -330,7 +330,7 @@ Gemini / Ollama
 ## app/models/interview_question.py
 **Purpose**: Individual question within a session.
 **Status**: Complete.
-**Fields**: `id`, `interview_session_id`, `parent_question_id` (self-referential FK for follow-ups), `question_text`, `question_type` (PRIMARY/FOLLOW_UP), `question_category`, `question_order`, `is_asked`.
+**Fields**: `id`, `interview_session_id`, `parent_question_id` (self-referential FK for follow-ups), `question_text`, `question_type` (PRIMARY/FOLLOW_UP), `question_category`, `planned_order`, `execution_path`, `is_asked`.
 **Missing**: No `asked_at` timestamp, no relationships.
 
 ---
@@ -379,7 +379,7 @@ Gemini / Ollama
 **Purpose**: Interview question database access.
 **Status**: Complete.
 **Methods**: `create`, `create_many`, `get_by_id`, `get_by_session`, `get_first_unasked_question`, `save`.
-**Notes**: `get_first_unasked_question` is critical for the interview flow and correctly filters `is_asked=False` ordered by `question_order`.
+**Notes**: `get_first_unasked_question` is critical for the interview flow and correctly filters `is_asked=False` ordered by `execution_path` (Materialized Path architecture).
 
 ---
 
@@ -559,7 +559,7 @@ All 4 migrations are linear with no branches. Migration chain is clean.
 | `users` | Authentication | → profiles, → interview_sessions | ✅ Complete | `last_login_at`, `is_superuser` | `echo=True` on engine will log all queries |
 | `profiles` | User profile metadata | users.id (unique FK) | ⚠️ Skeleton | `education`, `target_role`, `phone`, `linkedin_url`, `resume_url` | Far fewer fields than database design doc specifies |
 | `interview_sessions` | Session lifecycle | users.id (FK), → interview_questions | ✅ Complete | None critical | `resume_id` is an int with no FK — Resume table not yet created |
-| `interview_questions` | Per-session questions | interview_sessions.id (FK), self-referential parent_question_id | ✅ Complete | `asked_at` timestamp | Self-referential FK supports follow-up question tree |
+| `interview_questions` | Per-session questions | interview_sessions.id (FK), self-referential parent_question_id | ✅ Complete | `asked_at` timestamp | Uses `execution_path` for infinite depth adaptive queue injection |
 | `interview_answers` | Candidate transcripts | interview_sessions.id (FK), interview_questions.id (FK) | ✅ Complete | `audio_url` | `answer_source` enum supports VOICE but no audio storage yet |
 | `interview_evaluations` | AI evaluation results | interview_sessions.id (CASCADE FK, unique) | ✅ Schema complete | Score min/max constraints | Unique constraint ensures one evaluation per session |
 | `question_bank` | Reusable question library | None | ✅ Complete | None | Most advanced table — JSON metadata supports future vector search |

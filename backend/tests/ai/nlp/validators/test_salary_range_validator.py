@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.validators.salary_range import SalaryRangeValidator
 from app.ai.nlp.schemas.jd.jd_extracted_entities import ExtractedJDEntities
 from app.ai.nlp.schemas.jd.jd_employment_schema import JDEmploymentRecord, EmploymentType, RemoteType

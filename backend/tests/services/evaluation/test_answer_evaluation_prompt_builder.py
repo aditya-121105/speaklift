@@ -5,7 +5,6 @@ Validates that all deterministic metrics (core + extended) are injected
 into the user prompt.
 """
 
-import pytest
 from app.ai.llm.prompts.answer_evaluation_prompt import AnswerEvaluationPromptBuilder
 from app.services.evaluation.schemas.answer_evaluation import AnswerEvaluation
 from app.services.evaluation.schemas.grammar_evaluation import GrammarEvaluation

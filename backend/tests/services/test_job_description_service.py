@@ -1,15 +1,13 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from sqlalchemy.orm import Session
-from app.models.job_description import JobDescription
-from app.shared.enums import ParsingStatus, UploadStatus, StorageProvider
+from app.shared.enums import ParsingStatus, UploadStatus
 from app.services.job_description_service import (
     JobDescriptionService,
     JobDescriptionUploadError,
-    JobDescriptionNotFoundError,
 )
-from app.shared.exceptions import InvalidFileTypeError, FileTooLargeError
+from app.shared.exceptions import InvalidFileTypeError
 from app.core.storage import StorageBackend
 from app.ai.document_processing.services import DocumentExtractionService
 from app.ai.nlp.pipeline import NLPPipeline

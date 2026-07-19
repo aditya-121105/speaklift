@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 from app.ai.nlp.schemas.contact_schema import ContactInfo
 from app.ai.nlp.schemas.skill_schema import SkillSet, SkillEntry

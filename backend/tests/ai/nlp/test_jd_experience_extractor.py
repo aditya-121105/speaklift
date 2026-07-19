@@ -1,5 +1,4 @@
 import pytest
-from unittest.mock import MagicMock
 from app.ai.nlp.extractors.jd.jd_experience_extractor import JDExperienceExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.processed_document import ProcessedDocument

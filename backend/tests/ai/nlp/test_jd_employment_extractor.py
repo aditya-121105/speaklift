@@ -3,7 +3,7 @@ from app.ai.nlp.schemas.jd.jd_employment_schema import EmploymentType, RemoteTyp
 from app.ai.nlp.schemas.jd.salary_range import SalaryPeriod
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 from app.ai.nlp.schemas.processed_document import ProcessedDocument
-from app.ai.document_processing.schemas import DocumentContent, DocumentSection, SectionType
+from app.ai.document_processing.schemas import DocumentContent, DocumentSection
 
 
 def _build_context(text: str, metadata: dict = None, doc_meta: dict = None, sections_dict: dict = None) -> ProcessingContext:

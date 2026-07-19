@@ -2,7 +2,6 @@ from unittest.mock import MagicMock
 import pytest
 
 from sqlalchemy.orm import Session
-from app.models.resume import Resume
 from app.shared.enums import ParsingStatus, UploadStatus
 from app.services.resume_service import ResumeService
 from app.core.storage import StorageBackend

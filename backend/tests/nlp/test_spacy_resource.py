@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.resources.spacy_resource import SpacyResourceManager
 
 

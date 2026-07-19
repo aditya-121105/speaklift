@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.ai.llm.services.llm_service import LLMService
 from app.ai.llm.routers.router import LLMRouter

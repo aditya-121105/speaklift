@@ -1,4 +1,3 @@
-import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
 from app.main import app
@@ -31,7 +30,8 @@ def build_sample_state():
             question_text="Sample",
             question_type=QuestionType.PRIMARY,
             question_category=QuestionCategory.TECHNICAL,
-            ordering=1
+            ordering=1,
+            execution_path="01"
         )
     )
 

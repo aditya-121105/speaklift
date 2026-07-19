@@ -2,12 +2,9 @@ import pytest
 from unittest.mock import Mock, patch
 from sqlalchemy.orm import Session
 from app.services.evaluation.evaluation_service import InterviewEvaluationService
-from app.services.evaluation.schemas.evaluation_request import EvaluationRequest
-from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
-from app.services.question_selection.schemas.question_selection import SelectedQuestion
 from app.services.evaluation.schemas.answer_evaluation import AnswerEvaluation
-from app.services.evaluation.schemas.ai_evaluation import EnhancedAnswerEvaluation, AIEvaluationResult, CommunicationFeedback, QualitativeRating
-from app.shared.enums import AnswerSource, QuestionCategory, DifficultyLevel, EvaluationSource, QuestionType
+from app.services.evaluation.schemas.ai_evaluation import AIEvaluationResult, CommunicationFeedback, QualitativeRating
+from app.shared.enums import AnswerSource, QuestionCategory, EvaluationSource, QuestionType
 from app.models.interview_evaluation import InterviewEvaluation
 from app.models.interview_question import InterviewQuestion
 from app.models.interview_answer import InterviewAnswer
@@ -47,8 +44,8 @@ def db_session():
 @pytest.fixture
 def sample_questions():
     return [
-        InterviewQuestion(id=1, interview_session_id=42, question_text="Q1", question_category=QuestionCategory.TECHNICAL, question_order=1, question_type=QuestionType.PRIMARY),
-        InterviewQuestion(id=2, interview_session_id=42, question_text="Q2", question_category=QuestionCategory.TECHNICAL, question_order=2, question_type=QuestionType.PRIMARY)
+        InterviewQuestion(id=1, interview_session_id=42, question_text="Q1", question_category=QuestionCategory.TECHNICAL, planned_order=1, execution_path="01", question_type=QuestionType.PRIMARY),
+        InterviewQuestion(id=2, interview_session_id=42, question_text="Q2", question_category=QuestionCategory.TECHNICAL, planned_order=2, execution_path="02", question_type=QuestionType.PRIMARY)
     ]
 
 @pytest.fixture

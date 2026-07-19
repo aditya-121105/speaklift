@@ -10,6 +10,7 @@ class CurrentQuestion(BaseModel):
     question_type: QuestionType
     question_category: QuestionCategory
     ordering: int
+    execution_path: str
 
 class InterviewExecutionState(BaseModel):
     model_config = ConfigDict(frozen=True)

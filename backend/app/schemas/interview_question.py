@@ -19,7 +19,9 @@ class InterviewQuestionResponse(
 
     question_category: QuestionCategory
 
-    question_order: int
+    planned_order: int
+
+    execution_path: str
 
     is_asked: bool
 

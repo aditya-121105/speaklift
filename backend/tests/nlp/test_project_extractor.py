@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.extractors.project_extractor import ProjectExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 

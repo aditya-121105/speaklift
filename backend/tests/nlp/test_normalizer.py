@@ -1,4 +1,3 @@
-import pytest
 from app.ai.nlp.processors.normalizer import Normalizer
 from app.ai.nlp.schemas.processed_document import ProcessedDocument
 

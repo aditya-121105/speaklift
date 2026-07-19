@@ -6,7 +6,6 @@ Unit tests for LocalStorageBackend.
 Tests use tmp_path (pytest built-in) so no real project directories are touched.
 """
 
-import pytest
 from pathlib import Path
 
 from app.core.storage import LocalStorageBackend

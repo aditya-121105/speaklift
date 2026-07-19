@@ -8,7 +8,7 @@ from app.services.evaluation.schemas.answer_evaluation import AnswerEvaluation
 from app.services.evaluation.schemas.ai_evaluation import AIEvaluationResult, CommunicationFeedback, QualitativeRating
 from app.shared.enums import AnswerSource, QuestionCategory, DifficultyLevel
 from app.ai.llm.prompts.answer_evaluation_prompt import AnswerEvaluationPromptBuilder
-from app.ai.llm.prompts.base import Prompt, PromptVersion
+from app.ai.llm.prompts.base import Prompt
 
 @pytest.fixture
 def mock_deterministic_engine():

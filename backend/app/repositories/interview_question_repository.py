@@ -66,7 +66,7 @@ class InterviewQuestionRepository(ExecutionQuestionRepository):
                 == interview_session_id
             )
             .order_by(
-                InterviewQuestion.question_order
+                InterviewQuestion.execution_path
             )
             .all()
         )
@@ -84,7 +84,7 @@ class InterviewQuestionRepository(ExecutionQuestionRepository):
                 InterviewQuestion.is_asked.is_(False),
             )
             .order_by(
-                InterviewQuestion.question_order
+                InterviewQuestion.execution_path
             )
             .first()
         )
