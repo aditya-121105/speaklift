@@ -6,6 +6,7 @@ from app.models.interview_session import InterviewSession
 from app.models.interview_question import InterviewQuestion
 from app.models.interview_answer import InterviewAnswer
 from app.models.interview_evaluation import InterviewEvaluation
+from app.models.answer_evaluation import AnswerEvaluation
 from app.models.job_description import JobDescription
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "InterviewQuestion",
     "InterviewAnswer",
     "InterviewEvaluation",
+    "AnswerEvaluation",
     "JobDescription",
 ]

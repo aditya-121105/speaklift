@@ -93,6 +93,9 @@ def test_submit_answer_success():
     q_mock = MagicMock(spec=InterviewQuestion)
     q_mock.id = 10
     q_mock.interview_session_id = 1
+    q_mock.question_text = "Mock question?"
+    q_mock.question_category = QuestionCategory.TECHNICAL
+    q_mock.planned_order = 1
     question_repo.get_by_id.return_value = q_mock
     
     next_q_mock = MagicMock(spec=InterviewQuestion)
@@ -139,6 +142,9 @@ def test_submit_answer_completes_interview():
     q_mock = MagicMock(spec=InterviewQuestion)
     q_mock.id = 10
     q_mock.interview_session_id = 1
+    q_mock.question_text = "Mock question?"
+    q_mock.question_category = QuestionCategory.TECHNICAL
+    q_mock.planned_order = 1
     question_repo.get_by_id.return_value = q_mock
     
     q_mock.is_asked = True

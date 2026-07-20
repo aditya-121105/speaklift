@@ -59,13 +59,25 @@ def sample_answers():
 def test_evaluate_session_persistence(mock_repo, mock_deterministic_engine, mock_llm_service, db_session, sample_questions, sample_answers):
     mock_repo.create.side_effect = lambda db, eval_model: eval_model
     
+    # Mock DB query to return AnswerEvaluations
+    from app.models.answer_evaluation import AnswerEvaluation
+    mock_evals = [
+        AnswerEvaluation(
+            interview_answer_id=1, overall_score=0.8, keyword_coverage=0.8, concept_coverage=0.7, completeness=0.9, vocabulary_statistics={"word_count": 100},
+            communication_clarity="GOOD", communication_confidence="EXCELLENT",
+        ),
+        AnswerEvaluation(
+            interview_answer_id=2, overall_score=0.8, keyword_coverage=0.8, concept_coverage=0.7, completeness=0.9, vocabulary_statistics={"word_count": 100},
+            communication_clarity="GOOD", communication_confidence="EXCELLENT",
+        )
+    ]
+    mock_query = Mock()
+    mock_query.filter.return_value.all.return_value = mock_evals
+    db_session.query.return_value = mock_query
+
     service = InterviewEvaluationService(mock_deterministic_engine, mock_llm_service)
     
     result = service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
-    
-    # Verify evaluate was invoked per answer
-    assert mock_deterministic_engine.evaluate.call_count == 2
-    assert mock_llm_service.generate_json.call_count == 2
     
     # Verify repository persistence
     mock_repo.create.assert_called_once()
@@ -85,10 +97,24 @@ def test_evaluate_session_persistence(mock_repo, mock_deterministic_engine, mock
 
 @patch("app.services.evaluation.evaluation_service.InterviewEvaluationRepository")
 def test_evaluate_session_persistence_fallback(mock_repo, mock_deterministic_engine, mock_llm_service, db_session, sample_questions, sample_answers):
-    # Simulate LLM Failure
-    mock_llm_service.generate_json.side_effect = Exception("LLM Down")
     mock_repo.create.side_effect = lambda db, eval_model: eval_model
     
+    # Simulate AnswerEvaluations that lacked AI (fallback)
+    from app.models.answer_evaluation import AnswerEvaluation
+    mock_evals = [
+        AnswerEvaluation(
+            interview_answer_id=1, overall_score=0.8, keyword_coverage=0.8, concept_coverage=0.7, completeness=0.9, vocabulary_statistics={"word_count": 100},
+            communication_clarity=None, communication_confidence=None,
+        ),
+        AnswerEvaluation(
+            interview_answer_id=2, overall_score=0.8, keyword_coverage=0.8, concept_coverage=0.7, completeness=0.9, vocabulary_statistics={"word_count": 100},
+            communication_clarity=None, communication_confidence=None,
+        )
+    ]
+    mock_query = Mock()
+    mock_query.filter.return_value.all.return_value = mock_evals
+    db_session.query.return_value = mock_query
+
     service = InterviewEvaluationService(mock_deterministic_engine, mock_llm_service)
     
     result = service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
@@ -97,7 +123,7 @@ def test_evaluate_session_persistence_fallback(mock_repo, mock_deterministic_eng
     mock_repo.create.assert_called_once()
     saved_model = mock_repo.create.call_args.args[1]
     
-    # Since AI failed, source should be RULE_BASED
+    # Since AI failed (fields are None), source should be RULE_BASED
     assert saved_model.evaluation_source == EvaluationSource.RULE_BASED
     
     # Deterministic facts should still be saved

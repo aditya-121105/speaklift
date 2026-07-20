@@ -12,6 +12,8 @@ from app.models.interview_question import InterviewQuestion
 from app.models.interview_answer import InterviewAnswer
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
 from app.services.question_selection.schemas.question_selection import SelectedQuestion
+from app.models.answer_evaluation import AnswerEvaluation
+from app.repositories.answer_evaluation_repository import AnswerEvaluationRepository
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +61,51 @@ class InterviewEvaluationService:
             ai_interpretation=ai_result
         )
 
+    def persist_answer_evaluation(
+        self,
+        db: Session,
+        answer_id: int,
+        enhanced_eval: EnhancedAnswerEvaluation
+    ) -> AnswerEvaluation:
+        """
+        Persists a completed answer evaluation to the database.
+        """
+        metrics = enhanced_eval.deterministic_metrics
+        ai = enhanced_eval.ai_interpretation
+
+        eval_record = AnswerEvaluation(
+            interview_answer_id=answer_id,
+            overall_score=metrics.overall_score,
+            keyword_coverage=metrics.keyword_coverage,
+            concept_coverage=metrics.concept_coverage,
+            completeness=metrics.completeness,
+            vocabulary_statistics=metrics.vocabulary_statistics,
+        )
+
+        if metrics.grammar:
+            eval_record.grammar_score = metrics.grammar.grammar_quality_score
+            eval_record.grammar_details = metrics.grammar.model_dump()
+        if metrics.readability:
+            eval_record.readability_score = metrics.readability.flesch_reading_ease
+            eval_record.readability_details = metrics.readability.model_dump()
+        if metrics.confidence:
+            eval_record.confidence_score = metrics.confidence.confidence_score
+            eval_record.confidence_details = metrics.confidence.model_dump()
+        if metrics.semantic_similarity:
+            eval_record.semantic_similarity = metrics.semantic_similarity.cosine_similarity
+            eval_record.semantic_details = metrics.semantic_similarity.model_dump()
+
+        if ai:
+            eval_record.strengths = [s.model_dump() for s in ai.strengths]
+            eval_record.weaknesses = [w.model_dump() for w in ai.weaknesses]
+            eval_record.recommendations = [r.model_dump() for r in ai.suggestions]
+            eval_record.communication_clarity = ai.communication.clarity_rating.value
+            eval_record.communication_confidence = ai.communication.confidence_rating.value
+            eval_record.communication_tone = ai.communication.tone
+            eval_record.communication_feedback = ai.communication.feedback
+
+        return AnswerEvaluationRepository.create(db, eval_record)
+
     def evaluate_session(
         self,
         db: Session,
@@ -68,34 +115,15 @@ class InterviewEvaluationService:
         interview_context: str | None = None
     ) -> InterviewEvaluation:
         
-        answer_map = {a.interview_question_id: a for a in answers}
-        requests = []
-        for q in questions:
-            ans = answer_map.get(q.id)
-            if ans and ans.transcript:
-                sub_ans = SubmittedAnswer(
-                    transcript=ans.transcript, 
-                    answer_source=ans.answer_source
-                )
-                
-                # Centralized placeholder defaults for fields not present in execution schema
-                sel_q = SelectedQuestion(
-                    question_id=str(q.id),
-                    question_text=q.question_text,
-                    category=q.question_category,
-                    difficulty=DifficultyLevel.MEDIUM,
-                    expected_duration_seconds=60,
-                    tags=[],
-                    ordering=q.planned_order,
-                    objective_name="General Evaluation"
-                )
-                requests.append(EvaluationRequest(submitted_answer=sub_ans, selected_question=sel_q))
-
-        if not requests:
+        if not answers:
             raise ValueError("No answers to evaluate.")
             
-        enhanced_answers = [self.evaluate_answer(req, interview_context) for req in requests]
+        answer_ids = [a.id for a in answers]
+        persisted_evals = db.query(AnswerEvaluation).filter(AnswerEvaluation.interview_answer_id.in_(answer_ids)).all()
         
+        if not persisted_evals:
+            raise ValueError("No persisted answer evaluations found for aggregation.")
+
         t_score = 0
         com_score = 0
         beh_score = 0
@@ -108,26 +136,28 @@ class InterviewEvaluationService:
         
         rating_map = {"EXCELLENT": 100, "GOOD": 75, "FAIR": 50, "NEEDS_IMPROVEMENT": 25}
         
-        for ea in enhanced_answers:
-            # Deterministic metrics are 0.0 to 1.0 (assuming from engine)
-            base_score = int(ea.deterministic_metrics.overall_score * 100)
+        for pe in persisted_evals:
+            base_score = int(pe.overall_score * 100)
             t_score += base_score
             o_score += base_score
-            beh_score += base_score  # Fallback for behavioral if NLP doesn't separate it
+            beh_score += base_score  
             
-            if ea.ai_interpretation:
+            if pe.communication_clarity and pe.communication_confidence:
                 has_ai = True
-                strengths.extend([s.model_dump() for s in ea.ai_interpretation.strengths])
-                weaknesses.extend([w.model_dump() for w in ea.ai_interpretation.weaknesses])
-                recommendations.extend([r.model_dump() for r in ea.ai_interpretation.suggestions])
-                
-                com_score += rating_map.get(ea.ai_interpretation.communication.clarity_rating.value, 50)
-                conf_score += rating_map.get(ea.ai_interpretation.communication.confidence_rating.value, 50)
+                com_score += rating_map.get(pe.communication_clarity, 50)
+                conf_score += rating_map.get(pe.communication_confidence, 50)
             else:
                 com_score += 50
                 conf_score += 50
 
-        count = len(requests)
+            if pe.strengths:
+                strengths.extend(pe.strengths)
+            if pe.weaknesses:
+                weaknesses.extend(pe.weaknesses)
+            if pe.recommendations:
+                recommendations.extend(pe.recommendations)
+
+        count = len(persisted_evals)
         
         evaluation = InterviewEvaluation(
             interview_session_id=session_id,

@@ -168,11 +168,35 @@ class InterviewExecutionService:
             raise InvalidSessionStateError("Question does not belong to session.")
 
         # Persist answer
-        self._answer_repo.persist_answer(db, session_id, question_id, submitted_answer)
+        saved_answer = self._answer_repo.persist_answer(db, session_id, question_id, submitted_answer)
         self._question_repo.mark_as_asked(db, question_id)
 
+        # Build EvaluationRequest for answer
+        sel_q = SelectedQuestion(
+            question_id=str(question.id),
+            question_text=question.question_text,
+            category=question.question_category,
+            difficulty=DifficultyLevel.MEDIUM,
+            expected_duration_seconds=60,
+            tags=[],
+            ordering=question.planned_order,
+            objective_name="Adaptive Evaluation",
+        )
+        eval_request = EvaluationRequest(
+            submitted_answer=submitted_answer,
+            selected_question=sel_q,
+        )
+
+        evaluation = None
+        if self._evaluation_service:
+            enhanced_eval = self._evaluation_service.evaluate_answer(eval_request)
+            self._evaluation_service.persist_answer_evaluation(db, saved_answer.id, enhanced_eval)
+            evaluation = enhanced_eval.deterministic_metrics
+        elif self._deterministic_engine:
+            evaluation = self._deterministic_engine.evaluate(eval_request)
+
         # --- Adaptive routing ---
-        next_q = self._route_adaptively(db, session_id, question, submitted_answer)
+        next_q = self._route_adaptively(db, session_id, question, submitted_answer, evaluation)
 
         if next_q is None:
             # No more questions – complete the session
@@ -208,6 +232,7 @@ class InterviewExecutionService:
         session_id: int,
         current_question: InterviewQuestion,
         submitted_answer: SubmittedAnswer,
+        evaluation: "AnswerEvaluation | None",
     ) -> InterviewQuestion | None:
         """
         Evaluate the answer and decide whether to:
@@ -216,26 +241,9 @@ class InterviewExecutionService:
           c) Return None (end session).
         """
 
-        # If no deterministic engine is wired up, fall through to linear
-        if self._deterministic_engine is None or self._follow_up_service is None:
+        # If no deterministic engine is wired up or evaluation failed, fall through to linear
+        if not evaluation or self._follow_up_service is None:
             return self._question_repo.get_first_unasked_question(db, session_id)
-
-        # Build a minimal EvaluationRequest for deterministic scoring
-        sel_q = SelectedQuestion(
-            question_id=str(current_question.id),
-            question_text=current_question.question_text,
-            category=current_question.question_category,
-            difficulty=DifficultyLevel.MEDIUM,
-            expected_duration_seconds=60,
-            tags=[],
-            ordering=current_question.planned_order,
-            objective_name="Adaptive Evaluation",
-        )
-        eval_request = EvaluationRequest(
-            submitted_answer=submitted_answer,
-            selected_question=sel_q,
-        )
-        evaluation = self._deterministic_engine.evaluate(eval_request)
 
         # Count existing follow-ups for this primary question
         follow_up_count = self._count_follow_ups(db, current_question)

@@ -137,12 +137,12 @@ app/
 
 ### backend/app/models/
 **Purpose**: SQLAlchemy ORM models. Define the database schema.
-**Current files**: `user.py`, `profile.py`, `interview_session.py`, `interview_question.py`, `interview_answer.py`, `interview_evaluation.py`, `question_bank.py`, `resume.py`
+**Current files**: `user.py`, `profile.py`, `interview_session.py`, `interview_question.py`, `interview_answer.py`, `interview_evaluation.py`, `answer_evaluation.py`, `question_bank.py`, `resume.py`
 **Dependencies**: `app.db.base`, `app.shared.enums`
 
 ### backend/app/repositories/
 **Purpose**: All database access. Services never query the DB directly.
-**Current files**: `user_repository.py`, `interview_session_repository.py`, `interview_question_repository.py`, `interview_answer_repository.py`, `interview_evaluation_repository.py`, `question_bank_repository.py`, `resume_repository.py`
+**Current files**: `user_repository.py`, `interview_session_repository.py`, `interview_question_repository.py`, `interview_answer_repository.py`, `interview_evaluation_repository.py`, `answer_evaluation_repository.py`, `question_bank_repository.py`, `resume_repository.py`
 **Dependencies**: SQLAlchemy Session, ORM models
 
 ### backend/app/schemas/
@@ -351,6 +351,13 @@ Gemini / Ollama
 
 ---
 
+## app/models/answer_evaluation.py
+**Purpose**: Granular, per-answer evaluation scores including deterministic NLP metrics and AI feedback.
+**Status**: Complete.
+**Fields**: `id`, `interview_answer_id`, `overall_score`, `keyword_coverage`, `concept_coverage`, `completeness`, `grammar_score`, `readability_score`, `confidence_score`, `semantic_similarity`, `vocabulary_statistics`, `grammar_details`, `readability_details`, `confidence_details`, `semantic_details`, `strengths`, `weaknesses`, `recommendations`, `communication_clarity`, `communication_confidence`, `communication_tone`, `communication_feedback`, `engine_version`.
+
+---
+
 ## app/models/question_bank.py
 **Purpose**: Central repository of reusable interview questions with AI metadata.
 **Status**: Complete and well-designed.
@@ -394,6 +401,13 @@ Gemini / Ollama
 **Purpose**: Evaluation database access.
 **Status**: Complete.
 **Methods**: `create`, `get_by_session`, `save`.
+
+---
+
+## app/repositories/answer_evaluation_repository.py
+**Purpose**: Answer evaluation database access.
+**Status**: Complete.
+**Methods**: `create`, `get_by_id`, `get_by_answer_id`.
 
 ---
 

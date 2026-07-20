@@ -17,7 +17,7 @@ class InterviewAnswerRepository(ExecutionAnswerRepository):
         session_id: int,
         question_id: int,
         submitted_answer: SubmittedAnswer,
-    ) -> None:
+    ) -> InterviewAnswer:
 
         try:
             answer = InterviewAnswer(
@@ -29,6 +29,8 @@ class InterviewAnswerRepository(ExecutionAnswerRepository):
             )
             db.add(answer)
             db.commit()
+            db.refresh(answer)
+            return answer
         except Exception:
             db.rollback()
             raise

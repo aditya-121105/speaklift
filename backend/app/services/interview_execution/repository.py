@@ -31,7 +31,7 @@ class ExecutionQuestionRepository(Protocol):
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
 
 class ExecutionAnswerRepository(Protocol):
-    def persist_answer(self, db: Session, session_id: int, question_id: int, submitted_answer: SubmittedAnswer) -> None:
+    def persist_answer(self, db: Session, session_id: int, question_id: int, submitted_answer: SubmittedAnswer) -> InterviewAnswer:
         ...
     def get_by_session(self, db: Session, session_id: int) -> list[InterviewAnswer]:
         ...

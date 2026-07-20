@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Sprint M3.1 – Evaluation Persistence Layer**
+- Created `AnswerEvaluation` ORM model for persistent storage of granular answer-level NLP metrics and AI feedback.
+- Created `AnswerEvaluationRepository` for specialized data access.
+- Updated `InterviewExecutionService` to evaluate answers inline and persist them during `submit_answer`.
+- Modified `InterviewEvaluationService.evaluate_session` to perform DB aggregation from persisted answer evaluations instead of recalculating metrics at session close.
+- Generated Alembic migrations (`add_answer_evaluations`).
+
 - **Sprint M2.2.2 – Execution Queue Refactor**
 - Implemented Materialized Path execution queue architecture for adaptive interview paths.
 - Added `execution_path` (String) to `InterviewQuestion` for infinite-depth, lexicographical tree sorting (e.g. `01`, `01.01`).
