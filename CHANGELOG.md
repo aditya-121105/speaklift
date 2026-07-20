@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Sprint M3.2 – Interview Intelligence Engine**
+- Created comprehensive reporting schemas representing `InterviewReport`, `ExecutiveSummary`, `CompetencyAssessment`, `HiringRecommendation`, `LearningRoadmap`, and `InterviewStatistics`.
+- Implemented `InterviewReportService` to consume persisted evaluation data and generate a full candidate-facing report using an LLM.
+- Added a highly optimized prompt builder (`ReportPromptBuilder`) to pass aggregated statistics and per-question reviews instead of large raw transcripts.
+- Exposed `GET /api/v1/interviews/{id}/report` endpoint.
+
 - **Sprint M3.1 – Evaluation Persistence Layer**
 - Created `AnswerEvaluation` ORM model for persistent storage of granular answer-level NLP metrics and AI feedback.
 - Created `AnswerEvaluationRepository` for specialized data access.

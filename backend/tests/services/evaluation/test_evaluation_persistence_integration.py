@@ -77,7 +77,7 @@ def test_evaluate_session_persistence(mock_repo, mock_deterministic_engine, mock
 
     service = InterviewEvaluationService(mock_deterministic_engine, mock_llm_service)
     
-    result = service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
+    service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
     
     # Verify repository persistence
     mock_repo.create.assert_called_once()
@@ -117,7 +117,7 @@ def test_evaluate_session_persistence_fallback(mock_repo, mock_deterministic_eng
 
     service = InterviewEvaluationService(mock_deterministic_engine, mock_llm_service)
     
-    result = service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
+    service.evaluate_session(db_session, session_id=42, questions=sample_questions, answers=sample_answers)
     
     # Verify repository persistence
     mock_repo.create.assert_called_once()

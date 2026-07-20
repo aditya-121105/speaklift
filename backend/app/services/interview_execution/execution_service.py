@@ -58,6 +58,7 @@ from app.services.interview_execution.schemas.adaptive_decision import AdaptiveD
 from app.services.interview_execution.adaptive_thresholds import AdaptiveThresholds
 from app.services.interview_execution.adaptive_decision_engine import AdaptiveDecisionEngine
 from app.services.interview_execution.follow_up_generation_service import FollowUpGenerationService
+from app.models.answer_evaluation import AnswerEvaluation
 from app.services.evaluation.engine import DeterministicEvaluationEngine
 from app.services.evaluation.schemas.evaluation_request import EvaluationRequest
 from app.services.question_selection.schemas.question_selection import SelectedQuestion

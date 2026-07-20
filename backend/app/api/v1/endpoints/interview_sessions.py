@@ -20,8 +20,11 @@ from app.services.interview_workflow_service import InterviewWorkflowService
 from app.services.interview_execution.execution_service import InterviewExecutionService
 from app.dependencies.engine import (
     get_interview_workflow_service,
-    get_execution_service
+    get_execution_service,
+    get_report_service
 )
+from app.services.reporting.report_service import InterviewReportService
+from app.services.reporting.schemas import InterviewReport
 from app.services.interview_execution.schemas.interview_execution_state import InterviewExecutionState
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
 from app.schemas.interview_evaluation import InterviewEvaluationResponse
@@ -121,7 +124,7 @@ def submit_interview_answer(
     execution_service: InterviewExecutionService = Depends(get_execution_service)
 ):
     # Security check: ensures user owns session
-    session = InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
+    InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
     state = execution_service.get_state(db, interview_session_id)
     
     if not state.current_question:
@@ -143,7 +146,7 @@ def get_interview_state(
     execution_service: InterviewExecutionService = Depends(get_execution_service)
 ):
     # Security check
-    session = InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
+    InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
     try:
         return execution_service.get_state(db, interview_session_id)
     except Exception as e:
@@ -159,10 +162,33 @@ def get_interview_evaluation(
     current_user: User = Depends(get_current_user)
 ):
     # Security check
-    session = InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
+    InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
     
     eval_record = InterviewEvaluationRepository.get_by_session(db, interview_session_id)
     if not eval_record:
         raise HTTPException(status_code=404, detail="Evaluation not found.")
         
     return eval_record
+
+
+@router.get(
+    "/{interview_session_id}/report",
+    response_model=InterviewReport,
+)
+def get_interview_report(
+    interview_session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    report_service: InterviewReportService = Depends(get_report_service)
+):
+    # Security check
+    session = InterviewSessionService.get_interview_session(db, interview_session_id, current_user.id)
+    if session.status.value != "COMPLETED":
+        raise HTTPException(status_code=400, detail="Cannot generate report for an incomplete interview.")
+        
+    try:
+        return report_service.generate_report(db, interview_session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

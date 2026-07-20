@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.models.interview_session import InterviewSession
 from app.models.interview_question import InterviewQuestion
 from app.models.interview_answer import InterviewAnswer
+from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
 
 class ExecutionSessionRepository(Protocol):
     def get_by_id_and_user(self, db: Session, interview_session_id: int, user_id: int) -> InterviewSession | None:
@@ -27,9 +28,6 @@ class ExecutionQuestionRepository(Protocol):
         ...
     def get_by_session(self, db: Session, interview_session_id: int) -> list[InterviewQuestion]:
         ...
-
-from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
-
 class ExecutionAnswerRepository(Protocol):
     def persist_answer(self, db: Session, session_id: int, question_id: int, submitted_answer: SubmittedAnswer) -> InterviewAnswer:
         ...

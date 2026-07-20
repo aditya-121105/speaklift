@@ -7,11 +7,9 @@ from app.ai.llm.prompts.answer_evaluation_prompt import AnswerEvaluationPromptBu
 from sqlalchemy.orm import Session
 from app.models.interview_evaluation import InterviewEvaluation
 from app.repositories.interview_evaluation_repository import InterviewEvaluationRepository
-from app.shared.enums import EvaluationSource, DifficultyLevel
+from app.shared.enums import EvaluationSource
 from app.models.interview_question import InterviewQuestion
 from app.models.interview_answer import InterviewAnswer
-from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
-from app.services.question_selection.schemas.question_selection import SelectedQuestion
 from app.models.answer_evaluation import AnswerEvaluation
 from app.repositories.answer_evaluation_repository import AnswerEvaluationRepository
 

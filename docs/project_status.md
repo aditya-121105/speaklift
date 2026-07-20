@@ -192,6 +192,7 @@ Gemini / Ollama
 **Sub-packages**:
 - `interview_engine/` — `InterviewContextBuilder`, `InterviewPlanner`, `QuestionSelector`
 - `evaluation/` — Feature extractors, embedding manager, constants, keywords, utils
+- `reporting/` — `InterviewReportService`, `schemas.py`, `ai_schemas.py`, `prompt_builder.py`
 
 ### backend/app/shared/
 **Purpose**: Cross-cutting concerns shared across all modules.

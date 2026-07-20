@@ -21,6 +21,7 @@ from app.repositories.interview_session_repository import InterviewSessionReposi
 from app.repositories.interview_question_repository import InterviewQuestionRepository
 from app.repositories.interview_answer_repository import InterviewAnswerRepository
 from app.repositories.question_bank_repository import QuestionBankRepository
+from app.services.reporting.report_service import InterviewReportService
 
 from app.ai.llm.factory import get_llm_service
 
@@ -80,4 +81,10 @@ def get_interview_workflow_service() -> InterviewWorkflowService:
         question_selector=get_question_selector(),
         planner=get_planner(),
         matching_engine=get_matching_engine()
+    )
+
+
+def get_report_service() -> InterviewReportService:
+    return InterviewReportService(
+        llm_service=get_llm_service()
     )

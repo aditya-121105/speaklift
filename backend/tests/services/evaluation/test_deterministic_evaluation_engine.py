@@ -3,6 +3,8 @@ from app.services.evaluation.engine import DeterministicEvaluationEngine
 from app.services.evaluation.schemas.evaluation_request import EvaluationRequest
 from app.services.interview_execution.schemas.submitted_answer import SubmittedAnswer
 from app.services.question_selection.schemas.question_selection import SelectedQuestion
+from app.services.evaluation.feature_extractors.text.text_processor import TextProcessor
+from app.services.evaluation.feature_extractors.text.vocabulary_feature_extractor import VocabularyFeatureExtractor
 from app.shared.enums import AnswerSource, QuestionCategory, DifficultyLevel
 
 @pytest.fixture
@@ -76,9 +78,6 @@ def concept_request():
             objective_name="Test objective"
         )
     )
-
-from app.services.evaluation.feature_extractors.text.text_processor import TextProcessor
-from app.services.evaluation.feature_extractors.text.vocabulary_feature_extractor import VocabularyFeatureExtractor
 
 @pytest.fixture
 def evaluation_engine():

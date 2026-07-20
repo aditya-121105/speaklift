@@ -100,7 +100,7 @@ def test_field_of_study_extraction():
 def test_equivalent_practical_experience():
     extractor = JDEducationExtractor()
     text = "Equivalent practical experience in lieu of a degree is fine."
-    res = extractor.extract(_build_context(text))
+    extractor.extract(_build_context(text))
     
     # "a degree" is generic and doesn't match our specific canonical ones
     # But let's check a more common case:
