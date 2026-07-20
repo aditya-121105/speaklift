@@ -2,13 +2,17 @@
 JD Extractors Package.
 Currently contains only the base registry wiring for future JD extractors.
 """
+
 from app.ai.nlp.extractors.base import ExtractorRegistry
 from app.ai.nlp.schemas.jd.jd_extracted_entities import ExtractedJDEntities
 from app.ai.nlp.extractors.jd.jd_skill_extractor import JDSkillExtractor
 from app.ai.nlp.extractors.jd.jd_employment_extractor import JDEmploymentExtractor
 from app.ai.nlp.extractors.jd.jd_experience_extractor import JDExperienceExtractor
-from app.ai.nlp.extractors.jd.jd_responsibility_extractor import JDResponsibilityExtractor
+from app.ai.nlp.extractors.jd.jd_responsibility_extractor import (
+    JDResponsibilityExtractor,
+)
 from app.ai.nlp.extractors.jd.jd_education_extractor import JDEducationExtractor
+
 
 def get_jd_extractor_registry() -> ExtractorRegistry:
     """
@@ -25,5 +29,6 @@ def get_jd_extractor_registry() -> ExtractorRegistry:
     registry.register(JDResponsibilityExtractor())
     registry.register(JDEducationExtractor())
     return registry
+
 
 __all__ = ["get_jd_extractor_registry"]

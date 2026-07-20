@@ -233,10 +233,11 @@ class DocumentExtractionServiceImpl(DocumentExtractionService):
             logger.debug("PDF '%s': primary extractor (pdfplumber) succeeded.", filename)
             return result
         except DocumentExtractionError as primary_error:
+            primary_error_msg = primary_error.message
             logger.warning(
                 "PDF '%s': pdfplumber failed (%s). Retrying with PyMuPDF.",
                 filename,
-                primary_error.message,
+                primary_error_msg,
             )
 
         try:
@@ -246,6 +247,6 @@ class DocumentExtractionServiceImpl(DocumentExtractionService):
         except DocumentExtractionError as fallback_error:
             raise DocumentExtractionError(
                 f"All PDF extractors failed for '{filename}'. "
-                f"Primary: {primary_error.message}. "
+                f"Primary: {primary_error_msg}. "
                 f"Fallback: {fallback_error.message}."
             ) from fallback_error

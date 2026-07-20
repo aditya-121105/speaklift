@@ -28,8 +28,7 @@ class ContactExtractor(EntityExtractor):
         phone = None
         # Match +1-123-456-7890, 123.456.7890, (123) 456-7890, etc.
         phone_match = re.search(
-            r"(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}", 
-            text
+            r"(?:\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}", text
         )
         if phone_match:
             phone = phone_match.group(0).strip()
@@ -44,7 +43,7 @@ class ContactExtractor(EntityExtractor):
 
         # Search for URLs using regex
         urls = re.findall(r"https?://[^\s()<>]+", text)
-        
+
         # Clean trailing punctuation from URLs and search for direct platform handles/links without http/https
         all_urls = []
         for url in urls:
@@ -56,7 +55,7 @@ class ContactExtractor(EntityExtractor):
             r"\b(?:https?://)?(?:www\.)?github\.com/[^\s()<>]+",
             r"\b(?:https?://)?(?:www\.)?kaggle\.com/[^\s()<>]+",
             r"\b(?:https?://)?(?:www\.)?leetcode\.com/[^\s()<>]+",
-            r"\b(?:https?://)?(?:www\.)?hackerrank\.com/[^\s()<>]+"
+            r"\b(?:https?://)?(?:www\.)?hackerrank\.com/[^\s()<>]+",
         ]
         for pattern in platform_patterns:
             matches = re.findall(pattern, text, flags=re.IGNORECASE)
@@ -68,22 +67,34 @@ class ContactExtractor(EntityExtractor):
                     all_urls.append(full_url)
 
         # Check for domains like www.xyz.com or xyz.dev or xyz.io to catch raw portfolio links
-        domain_pattern = r"\b(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}(?:/[^\s()<>]+)?\b"
+        domain_pattern = (
+            r"\b(?:https?://)?(?:www\.)?[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}(?:/[^\s()<>]+)?\b"
+        )
         for m in re.finditer(domain_pattern, text):
             match_str = m.group(0).rstrip(".,;:)[]!?'\"")
             start, end = m.span()
             # If it's preceded or followed by '@' (part of email), skip
-            if start > 0 and text[start-1] == "@":
+            if start > 0 and text[start - 1] == "@":
                 continue
             if end < len(text) and text[end] == "@":
                 continue
             # If it contains '@', skip
             if "@" in match_str:
                 continue
-            
+
             # Avoid matching common resume noise (like "Seattle, WA" or file extensions like ".pdf")
             exclude_extensions = {".pdf", ".docx", ".doc", ".png", ".jpg"}
-            exclude_acronyms = {"b.tech", "m.tech", "b.sc", "m.sc", "ph.d", "b.a", "m.a", "b.com", "m.com"}
+            exclude_acronyms = {
+                "b.tech",
+                "m.tech",
+                "b.sc",
+                "m.sc",
+                "ph.d",
+                "b.a",
+                "m.a",
+                "b.com",
+                "m.com",
+            }
             if any(match_str.lower().endswith(ext) for ext in exclude_extensions):
                 continue
             if match_str.lower() in exclude_acronyms:
@@ -92,7 +103,10 @@ class ContactExtractor(EntityExtractor):
             # If it is part of the extracted email domain, skip
             if email:
                 email_parts = email.split("@")
-                if len(email_parts) == 2 and match_str.lower() in email_parts[1].lower():
+                if (
+                    len(email_parts) == 2
+                    and match_str.lower() in email_parts[1].lower()
+                ):
                     continue
 
             full_url = match_str
@@ -115,7 +129,12 @@ class ContactExtractor(EntityExtractor):
             elif "hackerrank.com" in url_lower:
                 hackerrank_url = url
             else:
-                exclude_domains = {"gmail.com", "yahoo.com", "hotmail.com", "outlook.com"}
+                exclude_domains = {
+                    "gmail.com",
+                    "yahoo.com",
+                    "hotmail.com",
+                    "outlook.com",
+                }
                 if not any(domain in url_lower for domain in exclude_domains):
                     if not portfolio_url:
                         portfolio_url = url
@@ -125,7 +144,7 @@ class ContactExtractor(EntityExtractor):
             gh_match = re.search(r"GitHub:\s*([^\s·|]+)", text, re.IGNORECASE)
             if gh_match:
                 github_url = f"https://github.com/{gh_match.group(1)}"
-                
+
         if not linkedin_url:
             li_match = re.search(r"LinkedIn:\s*([^\s·|]+)", text, re.IGNORECASE)
             if li_match:
@@ -135,7 +154,8 @@ class ContactExtractor(EntityExtractor):
         full_name = None
         # Heuristic 1: Look for the first PERSON named entity early in the document
         person_entities = [
-            ent for ent in context.processed_document.named_entities 
+            ent
+            for ent in context.processed_document.named_entities
             if ent.label == "PERSON"
         ]
         if person_entities:
@@ -145,7 +165,9 @@ class ContactExtractor(EntityExtractor):
                 if "\n" in cleaned_ent:
                     cleaned_ent = cleaned_ent.split("\n")[0].strip()
                 words = cleaned_ent.split()
-                if 2 <= len(words) <= 4 and not any(c.isdigit() or c == '@' for c in cleaned_ent):
+                if 2 <= len(words) <= 4 and not any(
+                    c.isdigit() or c == "@" for c in cleaned_ent
+                ):
                     valid_persons.append(cleaned_ent)
             if valid_persons:
                 full_name = valid_persons[0]
@@ -157,7 +179,9 @@ class ContactExtractor(EntityExtractor):
                 if "@" in line or any(c.isdigit() for c in line):
                     continue
                 words = line.split()
-                if 2 <= len(words) <= 4 and all(w[0].isupper() for w in words if w.isalpha()):
+                if 2 <= len(words) <= 4 and all(
+                    w[0].isupper() for w in words if w.isalpha()
+                ):
                     full_name = line
                     break
 
@@ -165,7 +189,8 @@ class ContactExtractor(EntityExtractor):
         location = None
         # Heuristic: Find GPE named entities
         gpe_entities = [
-            ent for ent in context.processed_document.named_entities 
+            ent
+            for ent in context.processed_document.named_entities
             if ent.label == "GPE"
         ]
         if gpe_entities:
@@ -173,7 +198,9 @@ class ContactExtractor(EntityExtractor):
             location = first_gpe.text
             for next_gpe in gpe_entities[1:]:
                 if next_gpe.start_char - first_gpe.end_char <= 5:
-                    combined_text = original_text[first_gpe.start_char:next_gpe.end_char]
+                    combined_text = original_text[
+                        first_gpe.start_char : next_gpe.end_char
+                    ]
                     if "," in combined_text or " " in combined_text:
                         location = combined_text
                         break
@@ -191,5 +218,5 @@ class ContactExtractor(EntityExtractor):
             portfolio_url=portfolio_url,
             leetcode_url=leetcode_url,
             hackerrank_url=hackerrank_url,
-            kaggle_url=kaggle_url
+            kaggle_url=kaggle_url,
         )

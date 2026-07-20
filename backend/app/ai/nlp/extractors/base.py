@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
+from pydantic import BaseModel
+from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
 from app.ai.nlp.schemas.processing_context import ProcessingContext
 
 
@@ -13,7 +15,7 @@ class EntityExtractor(ABC):
     @abstractmethod
     def domain(self) -> str:
         """
-        The domain name for this extractor, which maps directly 
+        The domain name for this extractor, which maps directly
         to a field name in the ExtractedEntities schema.
         Example: 'skills', 'education', 'contact'
         """
@@ -27,14 +29,12 @@ class EntityExtractor(ABC):
         pass
 
 
-from pydantic import BaseModel
-from app.ai.nlp.schemas.extracted_entities import ExtractedEntities
-
 
 class ExtractorRegistry:
     """
     Registry for EntityExtractors to support a plugin-based architecture.
     """
+
     def __init__(self, schema_cls: type[BaseModel] = ExtractedEntities) -> None:
         self._extractors: list[EntityExtractor] = []
         self._registered_domains: set[str] = set()
@@ -47,10 +47,14 @@ class ExtractorRegistry:
         domain = extractor.domain
 
         if domain not in self._valid_domains:
-            raise ValueError(f"Cannot register extractor with unknown domain: '{domain}'. Valid domains: {self._valid_domains}")
+            raise ValueError(
+                f"Cannot register extractor with unknown domain: '{domain}'. Valid domains: {self._valid_domains}"
+            )
 
         if domain in self._registered_domains:
-            raise ValueError(f"Cannot register multiple extractors for the same domain: '{domain}'")
+            raise ValueError(
+                f"Cannot register multiple extractors for the same domain: '{domain}'"
+            )
 
         self._extractors.append(extractor)
         self._registered_domains.add(domain)

@@ -119,9 +119,8 @@ app/
 - `security.py` — bcrypt hashing, JWT creation and decoding
 - `nlp.py` — Singleton loader for spaCy `en_core_web_sm`
 - `storage.py` — `StorageBackend` (abstract), `LocalStorageBackend` (concrete)
-- `logging.py` — **Empty file** (placeholder)
-- `database.py` — Re-exports `engine` and `SessionLocal` (thin wrapper over `db/session.py`)
-- `exception_handlers.py` — Global FastAPI exception handlers (SpeakLiftException → HTTP)
+- `exceptions.py` / `exception_handlers.py` — Centralized domain errors and HTTP mappings
+- `logging.py` — Structured JSON logging logic handlers (SpeakLiftException → HTTP)
 
 ### backend/app/db/
 **Purpose**: SQLAlchemy engine, session factory, and base class.
@@ -200,6 +199,14 @@ Gemini / Ollama
 - `enums.py` — All domain enums
 - `exceptions.py` — `UserAlreadyExistsError`, `InvalidCredentialsError`
 - `responses.py` — **Empty file** (placeholder for standardised API response wrappers)
+
+### backend/app/middleware/
+**Purpose**: ASGI middleware processing requests before/after routing.
+**Current files**:
+- `correlation.py` — Injects unique request IDs.
+- `security.py` — Injects CSP, XSS, HSTS security headers.
+- `size_limit.py` — Enforces 15MB maximum request size.
+- `rate_limit.py` — Enforces IP-based fixed-window rate limiting.
 
 ### backend/alembic/
 **Purpose**: Database migration scripts managed by Alembic.
@@ -608,7 +615,7 @@ All 4 migrations are linear with no branches. Migration chain is clean.
 | Route | Method | Purpose | Status | Notes |
 |---|---|---|---|---|
 | `/` | GET | Welcome message | ✅ Complete | Returns static JSON |
-| `/health` | GET | App health check | ✅ Complete | No actual health assertions |
+| `/health` | GET | Liveness and Readiness probes (PE1) | ✅ Complete | No actual health assertions |
 | `/db-health` | GET | Database connectivity check | ✅ Complete | Executes `SELECT 1` |
 
 ### Auth Endpoints (`/auth`)
@@ -681,7 +688,7 @@ The `api-contract-v1.md` specifies a standardised envelope `{ "success": true, "
 **Responsibilities**: Submit answers to questions.
 **Dependencies**: `InterviewAnswerRepository`, `InterviewQuestionRepository`, `InterviewSessionRepository`.
 **Implementation**: ~60%
-**Current Limitations**: Does NOT mark questions as `is_asked=True`. Does NOT advance to next question. Partially duplicates `InterviewService.submit_answer`. Should be merged or clearly differentiated. **This service is not currently used by any endpoint.**
+**Current Limitations**: Does NOT mark questions as `is_asked=True`. Does NOT advance to next question. Partially duplicates `InterviewService.submit_answer`. Should be merged or clearly differentiated. **Technical debt.**
 
 ---
 
@@ -692,8 +699,7 @@ The `api-contract-v1.md` specifies a standardised envelope `{ "success": true, "
 **Current Limitations**:
 - Does not use `InterviewPlanner` or `InterviewContext`.
 - Does not use `QuestionSelector`.
-- Uses `print()` instead of a logger.
-- Does not increment `usage_count` atomically — increments in memory then relies on session commit.
+- Uses `print()` for debug output — should use logger. Does not use the `InterviewPlanner` or `InterviewContextBuilder` — these are parallel implementations with overlapping responsibility.
 
 ---
 
@@ -757,12 +763,12 @@ The `api-contract-v1.md` specifies a standardised envelope `{ "success": true, "
 **Responsibilities**: Singleton loader for `BAAI/bge-base-en-v1.5` sentence transformer.
 **Dependencies**: `sentence_transformers`.
 **Implementation**: ~100% as infrastructure.
-**Notes**: Model loading works correctly. However, this manager is **not called from anywhere in the application**. The evaluation pipeline that would use it has not been implemented.
+**Missing**: Not called from any service. The embedding model is loaded but never used in any pipeline.
 
 ---
 
 ## Evaluation Pipeline (evaluation/ — constants, keywords, utils, knowledge_base/)
-**Status**: All files are **empty**. No implementation exists beyond the feature extractors.
+**Status**: All **completely empty** placeholder files.
 **Missing**: Keyword matching logic, scoring rules, evaluation orchestrator, LLM integration, report generator.
 
 ---

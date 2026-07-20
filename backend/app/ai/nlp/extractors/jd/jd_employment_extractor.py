@@ -1,8 +1,13 @@
 import re
 from app.ai.nlp.extractors.base import EntityExtractor
 from app.ai.nlp.schemas.processing_context import ProcessingContext
-from app.ai.nlp.schemas.jd.jd_employment_schema import JDEmploymentRecord, EmploymentType, RemoteType
+from app.ai.nlp.schemas.jd.jd_employment_schema import (
+    JDEmploymentRecord,
+    EmploymentType,
+    RemoteType,
+)
 from app.ai.nlp.schemas.jd.salary_range import SalaryRange, SalaryPeriod
+
 
 class JDEmploymentExtractor(EntityExtractor):
     """
@@ -15,28 +20,31 @@ class JDEmploymentExtractor(EntityExtractor):
 
     def extract(self, context: ProcessingContext) -> JDEmploymentRecord:
         text = context.document.cleaned_text
-        
+
         job_title = self._extract_job_title(context)
         emp_type = self._extract_employment_type(text)
         rem_type = self._extract_remote_type(text)
         location = self._extract_location(text)
         salary = self._extract_salary(text)
-        
+
         # Calculate overall confidence
         confidence = 1.0 if job_title else 0.8
-        
+
         return JDEmploymentRecord(
             job_title=job_title,
             location=location,
             remote_type=rem_type,
             employment_type=emp_type,
             salary=salary,
-            confidence=confidence
+            confidence=confidence,
         )
 
     def _extract_job_title(self, context: ProcessingContext) -> str | None:
         # 1. Explicit metadata
-        if context.document.extraction_metadata and "job_title" in context.document.extraction_metadata:
+        if (
+            context.document.extraction_metadata
+            and "job_title" in context.document.extraction_metadata
+        ):
             return context.document.extraction_metadata["job_title"]
         if context.metadata and "job_title" in context.metadata:
             return context.metadata["job_title"]
@@ -50,11 +58,20 @@ class JDEmploymentExtractor(EntityExtractor):
                 if first_section.start_char < 200:
                     heading = first_section.heading.strip()
                     # Filter out generic headings
-                    if heading.lower() not in ("summary", "objective", "about the role", "job description"):
+                    if heading.lower() not in (
+                        "summary",
+                        "objective",
+                        "about the role",
+                        "job description",
+                    ):
                         return heading
 
         # 3. Structured metadata fields
-        match = re.search(r"(?i)^(?:Role|Job Title|Title|Position):\s*(.+)$", context.document.cleaned_text, re.MULTILINE)
+        match = re.search(
+            r"(?i)^(?:Role|Job Title|Title|Position):\s*(.+)$",
+            context.document.cleaned_text,
+            re.MULTILINE,
+        )
         if match:
             return match.group(1).strip()
 
@@ -83,7 +100,9 @@ class JDEmploymentExtractor(EntityExtractor):
         return RemoteType.UNKNOWN
 
     def _extract_location(self, text: str) -> str | None:
-        match = re.search(r"(?i)^(?:Location|Location/Base):\s*(.+)$", text, re.MULTILINE)
+        match = re.search(
+            r"(?i)^(?:Location|Location/Base):\s*(.+)$", text, re.MULTILINE
+        )
         if match:
             return match.group(1).strip()
         return None
@@ -98,13 +117,13 @@ class JDEmploymentExtractor(EntityExtractor):
             r"(\d+(?:,\d+)*(?:\.\d+)?)\s*(k|lpa|lakhs?|cr)?)?\s*"
             r"(/(?:year|mo|month|hr|hour)|annually|per\s*annum|monthly|hourly|p\.a\.)?"
         )
-        
+
         best_salary = None
         best_conf = 0.0
-        
+
         for match in pattern.finditer(text):
             c1, v1, m1, c2, v2, m2, p = match.groups()
-            
+
             # Require at least a currency symbol or a period or a multiplier (like lpa) to avoid matching generic numbers
             if not c1 and not c2 and not p and not m1 and not m2:
                 continue
@@ -114,19 +133,23 @@ class JDEmploymentExtractor(EntityExtractor):
                 max_val = float(v2.replace(",", "")) if v2 else None
             except ValueError:
                 continue
-                
+
             # Apply multipliers
-            min_val = self._apply_multiplier(min_val, m1 or m2)  # sometimes '12-18 LPA' puts LPA on m2
+            min_val = self._apply_multiplier(
+                min_val, m1 or m2
+            )  # sometimes '12-18 LPA' puts LPA on m2
             max_val = self._apply_multiplier(max_val, m2 or m1)
 
             # Currency
             curr_raw = c1 or c2
             currency = self._normalize_currency(curr_raw) if curr_raw else None
-            
+
             # Period
             # LPA itself implies YEAR even if p is missing
             period = self._normalize_period(p)
-            if not period and ((m1 and "lpa" in m1.lower()) or (m2 and "lpa" in m2.lower())):
+            if not period and (
+                (m1 and "lpa" in m1.lower()) or (m2 and "lpa" in m2.lower())
+            ):
                 period = SalaryPeriod.YEAR
 
             # Confidence
@@ -136,7 +159,7 @@ class JDEmploymentExtractor(EntityExtractor):
                 conf -= 0.2
             if not currency:
                 conf -= 0.1
-                
+
             # Discard obvious non-salaries (e.g. 0-0, small numbers without period/currency)
             if min_val is not None and min_val <= 0:
                 continue
@@ -148,7 +171,7 @@ class JDEmploymentExtractor(EntityExtractor):
                     maximum=max_val,
                     currency=currency,
                     period=period,
-                    confidence=conf
+                    confidence=conf,
                 )
 
         return best_salary

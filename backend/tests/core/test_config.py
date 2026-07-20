@@ -1,4 +1,5 @@
 import os
+import pytest
 from app.core.config import Settings
 
 def test_default_configuration():
@@ -94,3 +95,42 @@ def test_model_configuration(monkeypatch):
     )
     
     assert settings.GEMINI_DEFAULT_MODEL == "gemini-1.5-pro"
+
+
+def test_validate_configuration_success():
+    settings = Settings(
+        APP_NAME="TestApp",
+        APP_VERSION="1.0.0",
+        DATABASE_URL="sqlite:///:memory:",
+        JWT_SECRET_KEY="secret",
+        JWT_ALGORITHM="HS256",
+        ACCESS_TOKEN_EXPIRE_MINUTES=30,
+        LLM_ROUTING_STRATEGY="prefer_local"
+    )
+    settings.validate_configuration()
+
+def test_validate_configuration_failure_cloud_strategy():
+    settings = Settings(
+        APP_NAME="TestApp",
+        APP_VERSION="1.0.0",
+        DATABASE_URL="sqlite:///:memory:",
+        JWT_SECRET_KEY="secret",
+        JWT_ALGORITHM="HS256",
+        ACCESS_TOKEN_EXPIRE_MINUTES=30,
+        LLM_ROUTING_STRATEGY="cloud_only",
+        GEMINI_API_KEY=None
+    )
+    with pytest.raises(ValueError, match="GEMINI_API_KEY is required for cloud routing strategies."):
+        settings.validate_configuration()
+
+def test_validate_configuration_failure_expire():
+    settings = Settings(
+        APP_NAME="TestApp",
+        APP_VERSION="1.0.0",
+        DATABASE_URL="sqlite:///:memory:",
+        JWT_SECRET_KEY="secret",
+        JWT_ALGORITHM="HS256",
+        ACCESS_TOKEN_EXPIRE_MINUTES=-5,
+    )
+    with pytest.raises(ValueError, match="ACCESS_TOKEN_EXPIRE_MINUTES must be positive."):
+        settings.validate_configuration()

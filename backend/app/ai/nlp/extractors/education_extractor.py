@@ -19,7 +19,7 @@ class EducationExtractor(EntityExtractor):
         sections = context.document.sections
         edu_content = ""
         in_section = False
-        
+
         if sections and "education" in sections:
             edu_content = sections["education"].content
             in_section = True
@@ -27,38 +27,44 @@ class EducationExtractor(EntityExtractor):
             edu_content = context.document.cleaned_text
 
         # Split into blocks by double newlines for isolated parsing
-        blocks = [b.strip() for b in re.split(r'\n\s*\n', edu_content) if b.strip()]
-        
+        blocks = [b.strip() for b in re.split(r"\n\s*\n", edu_content) if b.strip()]
+
         for block in blocks:
             record = self._parse_education_block(block, in_section)
             if record:
                 records.append(record)
-                
+
         return records
 
-    def _parse_education_block(self, text: str, in_section: bool) -> EducationRecord | None:
+    def _parse_education_block(
+        self, text: str, in_section: bool
+    ) -> EducationRecord | None:
         degree = self._extract_degree(text)
         institution = self._extract_institution(text)
-        
+
         if not degree and not institution:
             return None
-            
+
         field_of_study = self._extract_field_of_study(text)
         cgpa = self._extract_cgpa(text)
         percentage = self._extract_percentage(text)
         start_year, end_year = self._extract_years(text)
         is_current = self._is_current(text, end_year)
-        
+
         if start_year is None and end_year is not None and is_current:
             start_year = end_year
             end_year = None
-        
-        confidence = self._calculate_confidence(degree, institution, start_year, cgpa, percentage, in_section)
-        
+
+        confidence = self._calculate_confidence(
+            degree, institution, start_year, cgpa, percentage, in_section
+        )
+
         if confidence < 0.3:
             return None
 
-        normalized_name = self._generate_normalized_name(degree, field_of_study, institution)
+        normalized_name = self._generate_normalized_name(
+            degree, field_of_study, institution
+        )
 
         return EducationRecord(
             degree=degree,
@@ -71,7 +77,7 @@ class EducationExtractor(EntityExtractor):
             is_current=is_current,
             confidence=confidence,
             raw_text=text,
-            normalized_name=normalized_name
+            normalized_name=normalized_name,
         )
 
     def _extract_degree(self, text: str) -> str | None:
@@ -82,19 +88,31 @@ class EducationExtractor(EntityExtractor):
         return None
 
     def _extract_institution(self, text: str) -> str | None:
-        lines = text.split('\n')
+        lines = text.split("\n")
         for line in lines:
-            if re.search(r"\b(University|College|Institute|School|Academy|Technology)\b", line, flags=re.IGNORECASE):
+            if re.search(
+                r"\b(University|College|Institute|School|Academy|Technology)\b",
+                line,
+                flags=re.IGNORECASE,
+            ):
                 # Clean up typical separators to get just the institution name
                 return line.strip(" -:,|").split("|")[0].split("-")[0].strip()
         return None
 
     def _extract_field_of_study(self, text: str) -> str | None:
         branches = [
-            "Computer Science", "Software Engineering", "Information Technology",
-            "Electrical Engineering", "Mechanical Engineering", "Data Science",
-            "Artificial Intelligence", "Mathematics", "Physics", 
-            "Business Administration", "Economics", "Civil Engineering"
+            "Computer Science",
+            "Software Engineering",
+            "Information Technology",
+            "Electrical Engineering",
+            "Mechanical Engineering",
+            "Data Science",
+            "Artificial Intelligence",
+            "Mathematics",
+            "Physics",
+            "Business Administration",
+            "Economics",
+            "Civil Engineering",
         ]
         for branch in branches:
             if re.search(rf"\b{re.escape(branch)}\b", text, flags=re.IGNORECASE):
@@ -102,7 +120,11 @@ class EducationExtractor(EntityExtractor):
         return None
 
     def _extract_cgpa(self, text: str) -> float | None:
-        match = re.search(r"\b(?:CGPA|GPA)(?:\s+of)?\s*[:=-]?\s*([0-9]\.[0-9]{1,2})\b", text, flags=re.IGNORECASE)
+        match = re.search(
+            r"\b(?:CGPA|GPA)(?:\s+of)?\s*[:=-]?\s*([0-9]\.[0-9]{1,2})\b",
+            text,
+            flags=re.IGNORECASE,
+        )
         if match:
             return float(match.group(1))
         return None
@@ -123,24 +145,38 @@ class EducationExtractor(EntityExtractor):
         return years[0], years[-1]
 
     def _is_current(self, text: str, end_year: int | None) -> bool:
-        if re.search(r"\b(Present|Ongoing|Current|Now|Pursuing|Till Date)\b", text, flags=re.IGNORECASE):
+        if re.search(
+            r"\b(Present|Ongoing|Current|Now|Pursuing|Till Date)\b",
+            text,
+            flags=re.IGNORECASE,
+        ):
             return True
         if end_year and end_year > datetime.now().year:
             return True
         return False
 
-    def _calculate_confidence(self, degree, institution, start_year, cgpa, percentage, in_section) -> float:
+    def _calculate_confidence(
+        self, degree, institution, start_year, cgpa, percentage, in_section
+    ) -> float:
         score = 0.0
-        if in_section: score += 0.2
-        if degree: score += 0.3
-        if institution: score += 0.3
-        if start_year: score += 0.1
-        if cgpa or percentage: score += 0.1
+        if in_section:
+            score += 0.2
+        if degree:
+            score += 0.3
+        if institution:
+            score += 0.3
+        if start_year:
+            score += 0.1
+        if cgpa or percentage:
+            score += 0.1
         return min(1.0, round(score, 2))
 
     def _generate_normalized_name(self, degree, field_of_study, institution) -> str:
         parts = []
-        if degree: parts.append(degree)
-        if field_of_study: parts.append(f"in {field_of_study}")
-        if institution: parts.append(f"at {institution}")
+        if degree:
+            parts.append(degree)
+        if field_of_study:
+            parts.append(f"in {field_of_study}")
+        if institution:
+            parts.append(f"at {institution}")
         return " ".join(parts) if parts else "Education Record"

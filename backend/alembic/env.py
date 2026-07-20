@@ -8,7 +8,7 @@ sys.path.append(
 from app.core.config import settings
 from app.db.base import Base
 # Import models so Alembic can discover them
-from app.models import *
+from app.models import *  # noqa: F403
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

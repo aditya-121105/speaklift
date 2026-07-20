@@ -1,78 +1,78 @@
-"""
-Global exception handlers for the SpeakLift API.
-
-All domain exceptions are converted to appropriate HTTP responses.
-Generic exceptions are sanitized to avoid exposing internal details.
-"""
-
 import logging
+from datetime import datetime
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError, HTTPException
-
-from app.shared.exceptions import (
-    SpeakLiftException,
-)
+from app.shared.exceptions import SpeakLiftException
+from app.core.logging import request_id_ctx_var
 
 logger = logging.getLogger(__name__)
 
-
-async def speaklift_exception_handler(
-    request: Request,
-    exc: SpeakLiftException,
-) -> JSONResponse:
-    """
-    Handle all SpeakLift domain exceptions.
-
-    Since all domain exceptions inherit from SpeakLiftException,
-    this single handler can handle all of them by checking the
-    concrete exception type and using its status_code and detail.
-    """
+def build_error_response(request: Request, status_code: int, error_code: str, message: str) -> JSONResponse:
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"detail": exc.detail},
+        status_code=status_code,
+        content={
+            "error": {
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "request_id": request_id_ctx_var.get() or "unknown",
+                "error_code": error_code,
+                "message": message,
+                "path": request.url.path,
+                "status": status_code,
+            }
+        }
     )
 
+async def speaklift_exception_handler(request: Request, exc: SpeakLiftException) -> JSONResponse:
+    logger.warning(
+        f"Domain exception: {exc.detail}",
+        extra={"error_code": exc.__class__.__name__, "path": request.url.path}
+    )
+    return build_error_response(
+        request, 
+        exc.status_code, 
+        exc.__class__.__name__, 
+        exc.detail
+    )
 
-async def generic_exception_handler(
-    request: Request,
-    exc: Exception,
-) -> JSONResponse:
-    """
-    Handle unexpected exceptions.
+async def request_validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    logger.warning(
+        f"Validation error: {exc.errors()}",
+        extra={"error_code": "VALIDATION_ERROR", "path": request.url.path}
+    )
+    return build_error_response(
+        request, 
+        status.HTTP_422_UNPROCESSABLE_ENTITY, 
+        "VALIDATION_ERROR", 
+        "Invalid request parameters or body."
+    )
 
-    Never exposes stack traces in production.
-    Logs the exception for debugging.
-    Returns a sanitized HTTP 500 response.
-    """
-    # Do not handle FastAPI's built-in exceptions
-    if isinstance(exc, (HTTPException, RequestValidationError)):
-        # Let FastAPI handle these
-        raise exc
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    logger.warning(
+        f"HTTP exception: {exc.detail}",
+        extra={"error_code": "HTTP_ERROR", "path": request.url.path}
+    )
+    return build_error_response(
+        request, 
+        exc.status_code, 
+        "HTTP_ERROR", 
+        str(exc.detail)
+    )
 
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception(
         f"Unhandled exception: {exc}",
-        extra={
-            "path": request.url.path,
-            "method": request.method,
-        },
+        extra={"path": request.url.path, "method": request.method}
     )
-
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal server error"},
+    return build_error_response(
+        request, 
+        status.HTTP_500_INTERNAL_SERVER_ERROR, 
+        "INTERNAL_SERVER_ERROR", 
+        "An unexpected error occurred."
     )
-
 
 def register_exception_handlers(app: FastAPI) -> None:
-    """
-    Register all global exception handlers.
-
-    This function should be called from main.py to set up
-    centralized exception handling for the entire application.
-    """
-    # Register handler for all SpeakLift domain exceptions
     app.add_exception_handler(SpeakLiftException, speaklift_exception_handler)
-    
-    # Register handler for unexpected exceptions
+    app.add_exception_handler(RequestValidationError, request_validation_exception_handler)
+    app.add_exception_handler(HTTPException, http_exception_handler)
     app.add_exception_handler(Exception, generic_exception_handler)

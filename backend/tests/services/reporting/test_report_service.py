@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from app.services.reporting.report_service import InterviewReportService
 from app.models.interview_session import InterviewSession
 from app.models.interview_question import InterviewQuestion

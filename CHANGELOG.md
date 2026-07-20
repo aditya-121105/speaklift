@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Sprint PE2 – Operational Security & Reliability**
+- Added Global Exception Middleware translating unhandled internal errors into sanitized JSON responses using the standard Error Model.
+- Added configurable `CORSMiddleware` supporting dynamic origin whitelisting.
+- Added `TrustedHostMiddleware` to reject spoofed Host headers.
+- Added `SecurityHeadersMiddleware` (CSP, X-Frame-Options, HSTS, etc.).
+- Added `RequestSizeLimitMiddleware` rejecting requests >15MB with HTTP 413.
+- Added IP-based `RateLimitMiddleware` returning Retry-After headers with HTTP 429.
+
+- **Sprint PE1 – Observability & Runtime Foundation**
+- Configured native JSON structured logging (`app/core/logging.py`) with automatic correlation ID injection via context variables.
+- Created `CorrelationIdMiddleware` to trace requests (`X-Request-ID` and `X-Process-Time`).
+- Added robust Liveness (`/api/v1/health/live`) and Readiness (`/api/v1/health/ready`) probes returning detailed system diagnostics and database connectivity state.
+- Implemented `lifespan` hook in `main.py` for failing fast on invalid `Settings` and graceful database shutdown.
+
 - **Sprint M3.2 – Interview Intelligence Engine**
 - Created comprehensive reporting schemas representing `InterviewReport`, `ExecutiveSummary`, `CompetencyAssessment`, `HiringRecommendation`, `LearningRoadmap`, and `InterviewStatistics`.
 - Implemented `InterviewReportService` to consume persisted evaluation data and generate a full candidate-facing report using an LLM.

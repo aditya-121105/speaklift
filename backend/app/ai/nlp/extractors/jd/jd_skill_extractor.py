@@ -23,7 +23,7 @@ class JDSkillExtractor(EntityExtractor):
 
     def extract(self, context: ProcessingContext) -> list[JDSkillRecord]:
         candidates = set()
-        
+
         # Collect candidates
         for token in context.processed_document.tokens:
             candidates.add(token.strip().lower())
@@ -38,10 +38,12 @@ class JDSkillExtractor(EntityExtractor):
         candidates = {c for c in candidates if len(c) > 1 or c in ("c", "g")}
 
         extracted_skills: dict[str, JDSkillRecord] = {}
-        
+
         sections = context.document.sections
-        content_dict = {sec_type: sec for sec_type, sec in sections.items()} if sections else {}
-        
+        content_dict = (
+            {sec_type: sec for sec_type, sec in sections.items()} if sections else {}
+        )
+
         for candidate in candidates:
             matched_synonym = False
             for pattern_str, normalized_name in self._synonyms.items():
@@ -53,10 +55,10 @@ class JDSkillExtractor(EntityExtractor):
                         context=context,
                         content_dict=content_dict,
                         extracted_skills=extracted_skills,
-                        is_synonym=True
+                        is_synonym=True,
                     )
                     break
-            
+
             if matched_synonym:
                 continue
 
@@ -68,7 +70,7 @@ class JDSkillExtractor(EntityExtractor):
                     context=context,
                     content_dict=content_dict,
                     extracted_skills=extracted_skills,
-                    is_synonym=False
+                    is_synonym=False,
                 )
 
         return list(extracted_skills.values())
@@ -80,7 +82,7 @@ class JDSkillExtractor(EntityExtractor):
         context: ProcessingContext,
         content_dict: dict,
         extracted_skills: dict[str, JDSkillRecord],
-        is_synonym: bool
+        is_synonym: bool,
     ) -> None:
         # Find highest confidence match across text
         escaped_candidate = re.escape(candidate)
@@ -97,22 +99,32 @@ class JDSkillExtractor(EntityExtractor):
                 found = True
                 # Get surrounding sentence to check linguistic cues
                 sentence = self._get_sentence_containing(sec.content, match.start())
-                
-                tier = self._determine_tier(sentence, sec.section_type.value, sec.heading)
-                confidence = self._calculate_confidence(candidate, normalized_name, is_synonym)
-                
+
+                tier = self._determine_tier(
+                    sentence, sec.section_type.value, sec.heading
+                )
+                confidence = self._calculate_confidence(
+                    candidate, normalized_name, is_synonym
+                )
+
                 if confidence > best_confidence:
                     best_confidence = confidence
                     best_tier = tier
 
         if not found:
             # Fallback to general text
-            match = re.search(pattern, context.document.cleaned_text, flags=re.IGNORECASE)
+            match = re.search(
+                pattern, context.document.cleaned_text, flags=re.IGNORECASE
+            )
             if match:
-                sentence = self._get_sentence_containing(context.document.cleaned_text, match.start())
+                sentence = self._get_sentence_containing(
+                    context.document.cleaned_text, match.start()
+                )
                 tier = self._determine_tier(sentence, "other", "")
-                confidence = self._calculate_confidence(candidate, normalized_name, is_synonym)
-                
+                confidence = self._calculate_confidence(
+                    candidate, normalized_name, is_synonym
+                )
+
                 if confidence > best_confidence:
                     best_confidence = confidence
                     best_tier = tier
@@ -124,27 +136,30 @@ class JDSkillExtractor(EntityExtractor):
         # If already extracted, keep the one with higher confidence, or stronger tier
         if normalized_name in extracted_skills:
             existing = extracted_skills[normalized_name]
-            
+
             # Tier priority: REQUIRED > PREFERRED > OPTIONAL > UNKNOWN
             tier_priority = {
                 RequirementTier.REQUIRED: 4,
                 RequirementTier.PREFERRED: 3,
                 RequirementTier.OPTIONAL: 2,
-                RequirementTier.UNKNOWN: 1
+                RequirementTier.UNKNOWN: 1,
             }
-            
+
             replace = False
             if best_confidence > existing.confidence:
                 replace = True
-            elif best_confidence == existing.confidence and tier_priority[best_tier] > tier_priority[existing.requirement_tier]:
+            elif (
+                best_confidence == existing.confidence
+                and tier_priority[best_tier] > tier_priority[existing.requirement_tier]
+            ):
                 replace = True
-                
+
             if replace:
                 extracted_skills[normalized_name] = JDSkillRecord(
                     name=normalized_name,
                     normalized_name=normalized_name,
                     requirement_tier=best_tier,
-                    confidence=best_confidence
+                    confidence=best_confidence,
                 )
         else:
             if best_confidence > 0.0:
@@ -152,7 +167,7 @@ class JDSkillExtractor(EntityExtractor):
                     name=normalized_name,
                     normalized_name=normalized_name,
                     requirement_tier=best_tier,
-                    confidence=best_confidence
+                    confidence=best_confidence,
                 )
 
     def _get_sentence_containing(self, text: str, index: int) -> str:
@@ -166,20 +181,24 @@ class JDSkillExtractor(EntityExtractor):
                 start += 1
         else:
             start += 1
-            
+
         end = text.find(".", index)
         if end == -1:
             end = text.find("\n", index)
             if end == -1:
                 end = len(text)
-                
+
         return text[start:end].strip()
 
-    def _determine_tier(self, sentence: str, section_type: str, heading: str) -> RequirementTier:
+    def _determine_tier(
+        self, sentence: str, section_type: str, heading: str
+    ) -> RequirementTier:
         # 1. Linguistic cues (Highest priority)
         required_patterns = r"(?i)\b(must(\s+have)?|required|minimum|essential|needs?|mandatory|prerequisite)\b"
         preferred_patterns = r"(?i)\b(preferred|ideally|strongly\s+desired|desired|advantage(ous)?|plus)\b"
-        optional_patterns = r"(?i)\b(nice\s+to\s+have|bonus|optional|good\s+to\s+have)\b"
+        optional_patterns = (
+            r"(?i)\b(nice\s+to\s+have|bonus|optional|good\s+to\s+have)\b"
+        )
 
         if re.search(required_patterns, sentence):
             return RequirementTier.REQUIRED
@@ -193,22 +212,24 @@ class JDSkillExtractor(EntityExtractor):
             return RequirementTier.PREFERRED
         if re.search(optional_patterns, heading):
             return RequirementTier.OPTIONAL
-        
+
         # 3. Section type rules
         if section_type == "requirements":
             return RequirementTier.REQUIRED
-        
+
         # Ambiguous
         return RequirementTier.UNKNOWN
 
-    def _calculate_confidence(self, candidate: str, normalized_name: str, is_synonym: bool) -> float:
+    def _calculate_confidence(
+        self, candidate: str, normalized_name: str, is_synonym: bool
+    ) -> float:
         # Exact taxonomy match -> highest confidence
         if not is_synonym and candidate.lower() == normalized_name.lower():
             return 1.0
-        
+
         # Synonym match -> slightly lower
         if is_synonym:
             return 0.9
-            
+
         # Lemma/chunk matching variations -> lower
         return 0.8

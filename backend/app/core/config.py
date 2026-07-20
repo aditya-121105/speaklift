@@ -45,6 +45,24 @@ class Settings(BaseSettings):
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_DEFAULT_MODEL: str = "llama3.1:8b"
 
+    # ---------------------------------------------------------------------------
+    # Security & Operational Settings
+    # ---------------------------------------------------------------------------
+    ALLOWED_HOSTS: list[str] = ["*"]
+    CORS_ORIGINS: list[str] = ["*"]
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: list[str] = ["*"]
+    CORS_ALLOW_HEADERS: list[str] = ["*"]
+    RATE_LIMIT_PER_MINUTE: int = 60
+    MAX_REQUEST_SIZE_BYTES: int = 15_000_000  # 15MB
+
+    def validate_configuration(self):
+        """Perform deeper cross-field validation at startup."""
+        if self.LLM_ROUTING_STRATEGY in ("prefer_cloud", "cloud_only") and not self.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is required for cloud routing strategies.")
+        if self.ACCESS_TOKEN_EXPIRE_MINUTES <= 0:
+            raise ValueError("ACCESS_TOKEN_EXPIRE_MINUTES must be positive.")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
