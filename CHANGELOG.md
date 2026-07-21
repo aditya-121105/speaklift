@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Sprint F1 – Frontend Architecture Foundation**
+- Bootstrapped Next.js App Router project in `/frontend` directory.
+- Configured strictly typed TypeScript environment and `tsconfig.json` path aliases (`@/components`, `@/features`, etc.).
+- Integrated Tailwind CSS v4 and `shadcn/ui` with semantic design tokens defined in `globals.css` (dark mode first).
+- Set up root `layout.tsx` incorporating Next Fonts (`Inter`, `Geist_Mono`), SEO placeholders, and `sonner` Toaster.
+- Established `GlobalProviders` composing `ThemeProvider` and `QueryClientProvider` (TanStack Query).
+- Configured frontend error handling infrastructure (`error.tsx`, `global-error.tsx`, `not-found.tsx`, `loading.tsx`).
+- Created scalable folder structure conforming to architecture specifications (Features, Hooks, Services, etc.).
+- Added code quality tooling (`eslint`, `prettier`, `lint-staged`, `husky`) and `cn` class utility.
+
 - **Sprint PE2 – Operational Security & Reliability**
 - Added Global Exception Middleware translating unhandled internal errors into sanitized JSON responses using the standard Error Model.
 - Added configurable `CORSMiddleware` supporting dynamic origin whitelisting.

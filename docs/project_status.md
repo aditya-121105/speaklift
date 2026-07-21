@@ -67,7 +67,7 @@ The architecture was deliberately designed so that future services (Speech, Visi
 /
 ├── backend/          Core backend application
 ├── docs/             Architecture docs, ADRs, requirements
-├── frontend/         Empty — not started
+├── frontend/         Next.js App Router (Sprint F1 Foundation Complete)
 ├── infrastructure/   Docker Compose + AWS/nginx placeholders
 ├── pyproject.toml    Project metadata and dependencies
 ├── alembic.ini       Alembic configuration (script_location points to backend/alembic)
@@ -250,7 +250,8 @@ Gemini / Ollama
 **Current files**: `docker/docker-compose.yml` (PostgreSQL container only), `docker/backend.Dockerfile` (empty), `aws/` (empty), `nginx/` (empty)
 
 ### frontend/
-**Purpose**: Frontend application. **Completely empty.**
+**Purpose**: Frontend application.
+**Status**: Sprint F1 Foundation Complete. Contains Next.js App Router, Tailwind 4, shadcn/ui, TanStack Query, and Zustand configuration placeholders.
 
 ---
 
