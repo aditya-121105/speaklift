@@ -251,7 +251,7 @@ Gemini / Ollama
 
 ### frontend/
 **Purpose**: Frontend application.
-**Status**: Sprint F1 Foundation Complete. Contains Next.js App Router, Tailwind 4, shadcn/ui, TanStack Query, and Zustand configuration placeholders.
+**Status**: Sprint F3 Application Shell Complete. Contains responsive dashboard layout, centralized navigation, shared UI primitives, and integrated UserMenu/ThemeToggle.
 
 ---
 

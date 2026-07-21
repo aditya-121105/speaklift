@@ -8,6 +8,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Sprint F3 – Application Shell (Dashboard Layout)**
+- Designed the permanent, authenticated `AppShell` incorporating `Sidebar`, `Header`, and responsive mobile `Sheet` navigation.
+- Established a static, centralized navigation registry in `src/config/navigation.ts` for dynamic sidebar rendering.
+- Implemented core presentation primitives (`PageContainer`, `PageHeader`, `EmptyState`, `ErrorState`, `LoadingState`) to standardize future feature content areas.
+- Configured a dynamic `ThemeToggle` inside the header utilizing `next-themes` DropdownMenu integration.
+- Bound the `UserMenu` to the Zustand auth store, displaying the current user's email and injecting secure logout handlers natively.
+- Enforced global authenticated route protection via `(dashboard)/layout.tsx` wrapper over `AppShell`.
+
+- **Sprint F2 – Frontend Authentication Infrastructure**
+- Implemented global `AuthProvider` and `useAuth` hooks connected to Zustand for reactive session management.
+- Built reusable Axios API client (`src/lib/api-client.ts`) with robust JWT request interceptors and 401 recovery logic.
+- Scaffolded comprehensive Auth UI schemas using `zod` alongside fully accessible `react-hook-form` components (Login, Signup, Forgot/Reset Password).
+- Created `/login`, `/signup`, `/forgot-password`, and `/reset-password` routes governed by `GuestRoute` layout bounds.
+- Developed `ProtectedRoute` wrappers designed for scalable gating of feature modules.
+- Refactored `middleware.ts` to `proxy.ts` (Next.js 16 compliant) for base-level route interception.
+
 - **Sprint F1 – Frontend Architecture Foundation**
 - Bootstrapped Next.js App Router project in `/frontend` directory.
 - Configured strictly typed TypeScript environment and `tsconfig.json` path aliases (`@/components`, `@/features`, etc.).

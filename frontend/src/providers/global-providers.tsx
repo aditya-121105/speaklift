@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ThemeProvider } from "./theme-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { AuthProvider } from "./auth-provider";
 
 /**
  * GlobalProviders acts as the composition root for all application-wide contexts.
@@ -35,7 +36,7 @@ export function GlobalProviders({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );
